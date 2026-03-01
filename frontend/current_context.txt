@@ -1,0 +1,16 @@
+### Bookings.jsx
+Line 117: Parsing error: Unexpected token }
+Context around line 117:
+112:         } else {
+113:             setSuggestions([]);
+114:             setShowSuggestions(false);
+115:             setPreviousTrips([]);
+116:         }
+117:     };
+118: 
+119:     // Select a suggestion
+120:     
+121:         
+122:         setFormData(prev => ({
+
+---

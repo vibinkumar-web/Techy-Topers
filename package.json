@@ -1,0 +1,14 @@
+{
+  "name": "techy-topers",
+  "version": "1.0.0",
+  "description": "Techy Topers - Taxi Booking Project",
+  "scripts": {
+    "setup-db": "powershell -ExecutionPolicy Bypass -File setup_db.ps1",
+    "start-backend": "powershell -ExecutionPolicy Bypass -File start_backend.ps1",
+    "start-frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run start-backend\" \"npm run start-frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
