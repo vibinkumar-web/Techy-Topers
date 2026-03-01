@@ -1,15 +1,4 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
 include_once '../config/db.php';
 
 $database = new Database();
@@ -78,19 +67,37 @@ if ($method === 'POST') {
             $insStmt->bindParam(":v_types", $row['v_types']);
             $insStmt->bindParam(":v_no", $row['v_no']);
             $insStmt->bindParam(":d_mobile", $row['d_mobile']);
-            $insStmt->bindParam(":user_id", $data->user_id); // User performing cancel
+            $user_id_safe = isset($data->user_id) ? $data->user_id : '1';
+            $insStmt->bindParam(":user_id", $user_id_safe); // User performing cancel
             $insStmt->bindParam(":reason", $data->reason);
             
             if ($insStmt->execute()) {
-                // 3. Mark as cancelled in original table
-                // Legacy sets booking_status='1'
-                $updateQuery = "UPDATE f_ft_booking SET booking_status = '1' WHERE b_id = :b_id";
-                $updStmt = $db->prepare($updateQuery);
-                $updStmt->bindParam(":b_id", $data->b_id);
+                // 3. Delete from original table as requested by user
+                $deleteQuery = "DELETE FROM f_ft_booking WHERE b_id = :b_id";
+                $delStmt = $db->prepare($deleteQuery);
+                $delStmt->bindParam(":b_id", $data->b_id);
                 
-                if ($updStmt->execute()) {
+                if ($delStmt->execute()) {
+                    
+                    // 4. Cleanup if it was assigned
+                    if ($row['assign'] === '1' && !empty($row['q'])) {
+                        $v_id = $row['q'];
+                        
+                        // Remove from ontrip
+                        $delTripQuery = "DELETE FROM f_ontrip WHERE b_id = :b_id";
+                        $delTripStmt = $db->prepare($delTripQuery);
+                        $delTripStmt->bindParam(":b_id", $data->b_id);
+                        $delTripStmt->execute();
+                        
+                        // Free the driver
+                        $freeDriverQuery = "UPDATE f_login_status SET ontrip_status='0', status_assign='0' WHERE id_emp = :v_id";
+                        $freeDriverStmt = $db->prepare($freeDriverQuery);
+                        $freeDriverStmt->bindParam(":v_id", $v_id);
+                        $freeDriverStmt->execute();
+                    }
+
                     http_response_code(200);
-                    echo json_encode(array("message" => "Booking cancelled successfully."));
+                    echo json_encode(array("message" => "Booking cancelled and vehicle freed successfully."));
                 } else {
                     http_response_code(503);
                     echo json_encode(array("message" => "Failed to update booking status."));

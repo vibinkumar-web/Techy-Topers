@@ -8,7 +8,33 @@ $db = $database->getConnection();
 
 $type = isset($_GET['type']) ? $_GET['type'] : '';
 
-if ($type === 'customer') {
+if ($type === 'booking') {
+    // Current / Advance Bookings
+    $from_date = isset($_GET['from_date']) ? $_GET['from_date'] : '';
+    $to_date = isset($_GET['to_date']) ? $_GET['to_date'] : '';
+    
+    $query = "SELECT * FROM f_ft_booking WHERE 1=1";
+    
+    if (!empty($from_date) && !empty($to_date)) {
+        $query .= " AND pickup BETWEEN :from_date AND :to_date";
+    }
+    
+    $query .= " ORDER BY b_id DESC";
+    
+    $stmt = $db->prepare($query);
+    if (!empty($from_date) && !empty($to_date)) {
+        $stmt->bindParam(":from_date", $from_date);
+        $stmt->bindParam(":to_date", $to_date);
+    }
+    $stmt->execute();
+    
+    $data = array();
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        array_push($data, $row);
+    }
+    echo json_encode($data);
+
+} elseif ($type === 'customer') {
     // Customer Booking Report
     $customer_name = isset($_GET['customer']) ? $_GET['customer'] : '';
     

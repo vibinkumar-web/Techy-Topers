@@ -1,27 +1,21 @@
 import { useState, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
+        
+
+        
+
+import AuthContext from '../context/AuthContext';
 const CancelBooking = () => {
-    const { api, user } = useContext(AuthContext);
+    const toast = useToast();
+const { api, user } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
-    const booking = location.state?.booking; // Expect booking passed via navigation state
+    const booking = location.state?.booking;
 
     const [reason, setReason] = useState('');
     const [loading, setLoading] = useState(false);
-
-    if (!booking) {
-        return (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <strong className="font-bold">Error!</strong>
-                    <span className="block sm:inline"> No booking selected for cancellation. Please select a booking from the list.</span>
-                </div>
-                <button onClick={() => navigate('/bookings')} className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-md">Go to Bookings</button>
-            </div>
-        );
-    }
 
     const handleCancel = async (e) => {
         e.preventDefault();
@@ -30,61 +24,126 @@ const CancelBooking = () => {
             await api.post('/cancel.php', {
                 b_id: booking.b_id,
                 reason: reason,
-                user_id: user.emp_id
+                user_id: user?.emp_id || user?.id || 1
             });
-            alert('Booking cancelled successfully.');
+            toast('Booking cancelled successfully.');
             navigate('/bookings');
         } catch (error) {
             console.error("Error cancelling booking", error);
-            alert('Failed to cancel booking.');
+            const msg = error.response?.data?.message || error.message || "Unknown error";
+            toast('Failed to cancel booking: ' + msg, 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl">
-            <h1 className="text-2xl font-bold text-red-600 mb-6">Cancel Booking #{booking.b_id}</h1>
+    if (!booking) {
+        return (
+            <div className="page-wrap">
+                <div className="page-header">
+                    <div>
+                        <div>
+                            <h1 style={{ color: '#c5111a' }}>Booking Not Available</h1>
+                            <p>Could not locate the booking requested for cancellation</p>
+                        </div>
+                        <button className="btn-ghost" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }} onClick={() => navigate('/bookings')}>
+                            <span className="material-icons">arrow_back</span>
+                            Back to Bookings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
-            <div className="mb-4 text-sm text-gray-600">
-                <p><strong>Customer:</strong> {booking.b_name}</p>
-                <p><strong>Pickup:</strong> {booking.pickup}</p>
-                <p><strong>Route:</strong> {booking.p_city} to {booking.d_place}</p>
+    return (
+        <div className="page-wrap">
+            <div className="page-header">
+                <div>
+                    <div>
+                        <h1>Cancel Booking</h1>
+                        <p>Withdraw and cancel scheduled trip #{booking.b_id}</p>
+                    </div>
+                    <button className="btn-ghost" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }} onClick={() => navigate('/bookings')}>
+                        <span className="material-icons" style={{ fontSize: 16 }}>arrow_back</span>
+                        Back to Bookings
+                    </button>
+                </div>
             </div>
 
-            <form onSubmit={handleCancel}>
-                <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="reason">
-                        Reason for Cancellation
-                    </label>
-                    <textarea
-                        id="reason"
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        rows="4"
-                        placeholder="Enter reason..."
-                        required
-                    />
-                </div>
+            <div className="page-body">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 640 }}>
 
-                <div className="flex items-center justify-between">
-                    <button
-                        type="button"
-                        onClick={() => navigate('/bookings')}
-                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                    >
-                        Back
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={`bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                        {loading ? 'Cancelling...' : 'Confirm Cancel'}
-                    </button>
+                    <div className="section" style={{ borderTop: '3px solid #c5111a' }}>
+                        <div style={{ padding: 32 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, borderBottom: '1px solid #fef2f2', paddingBottom: 16 }}>
+                                <div style={{ background: '#fef2f2', width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span className="material-icons" style={{ fontSize: 20, color: '#c5111a' }}>warning</span>
+                                </div>
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#c5111a' }}>Destructive Action</h3>
+                                    <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>This cancellation process is permanent and irreversible</p>
+                                </div>
+                            </div>
+
+                            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20, marginBottom: 32 }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                    <div>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 4 }}>Customer Profile</div>
+                                        <div style={{ fontSize: 14, fontWeight: 700, color: '#023149' }}>{booking.b_name || booking.cus_name}</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 4 }}>Pickup Timing</div>
+                                        <div style={{ fontSize: 14, fontWeight: 600, color: '#475569' }}>{booking.bookin_time || booking.pickup_time}</div>
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2', borderTop: '1px dashed #cbd5e1', paddingTop: 16, marginTop: 4 }}>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 4 }}>Mapped Route</div>
+                                        <div style={{ fontSize: 14, fontWeight: 600, color: '#023149' }}>{booking.pickup} &rarr; {booking.p_city || booking.drop_place || booking.d_place}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleCancel} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label>Reason for Cancellation <span style={{ color: '#c5111a' }}>*</span></label>
+                                    <textarea
+                                        value={reason}
+                                        onChange={(e) => setReason(e.target.value)}
+                                        rows="4"
+                                        placeholder="Please provide a brief, detailed reason..."
+                                        required
+                                        style={{ resize: 'vertical' }}
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 16, paddingTop: 24, borderTop: '1px solid #fdf6e8' }}>
+                                    <button
+                                        type="button"
+                                        className="btn-ghost"
+                                        onClick={() => navigate('/bookings')}
+                                        disabled={loading}
+                                        style={{ height: 42, padding: '0 24px' }}
+                                    >
+                                        Abort
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="btn-primary"
+                                        style={{ background: '#c5111a', height: 42, padding: '0 32px', color: '#fff', border: 'none', opacity: loading ? 0.7 : 1, cursor: loading ? 'wait' : 'pointer' }}
+                                        onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#7d0907'; }}
+                                        onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#c5111a'; }}
+                                    >
+                                        <span className="material-icons" style={{ fontSize: 18 }}>cancel</span>
+                                        {loading ? 'Processing...' : 'Confirm Cancellation'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
                 </div>
-            </form>
+            </div>
         </div>
     );
 };

@@ -1,7 +1,9 @@
 import { useState, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const CancelReport = () => {
+    const toast = useToast();
     const { api } = useContext(AuthContext);
     const [reportData, setReportData] = useState([]);
     const [filters, setFilters] = useState({
@@ -35,74 +37,112 @@ const CancelReport = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Cancelled Booking Report</h1>
-
-            <div className="bg-white shadow rounded-lg p-6 mb-8">
-                <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div className="page-wrap">
+            <div className="page-header">
+                <div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">From Date</label>
+                        <h1>Termination Telemetry</h1>
+                        <p>Evaluate withdrawn itineraries and associated cancellation heuristics</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="page-body">
+                <form onSubmit={handleSearch} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 24, alignItems: 'flex-end', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 24, marginBottom: 32, boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
+                    <div className="form-field" style={{ margin: 0 }}>
+                        <label style={{ fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>Origin Epoch</label>
                         <input
                             type="date"
                             name="from_date"
                             value={filters.from_date}
                             onChange={handleFilterChange}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
                             required
+                            style={{ height: 48, fontWeight: 600, color: '#0f172a' }}
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">To Date</label>
+                    <div className="form-field" style={{ margin: 0 }}>
+                        <label style={{ fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>Terminus Epoch</label>
                         <input
                             type="date"
                             name="to_date"
                             value={filters.to_date}
                             onChange={handleFilterChange}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
                             required
+                            style={{ height: 48, fontWeight: 600, color: '#0f172a' }}
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                        className="btn-primary"
+                        style={{ height: 48, padding: '0 32px', background: '#c5111a', opacity: loading ? 0.7 : 1, cursor: loading ? 'wait' : 'pointer', fontSize: 15 }}
+                        onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#7d0907'; }}
+                        onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#c5111a'; }}
                     >
-                        {loading ? 'Searching...' : 'Search'}
+                        <span className="material-icons" style={{ fontSize: 20 }}>troubleshoot</span>
+                        {loading ? 'Evaluating...' : 'Query Terminations'}
                     </button>
                 </form>
-            </div>
 
-            <div className="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">B-ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {!searched ? (
-                            <tr><td colSpan="6" className="text-center py-4 text-gray-500">Select date range to search.</td></tr>
-                        ) : !Array.isArray(reportData) || reportData.length === 0 ? (
-                            <tr><td colSpan="6" className="text-center py-4">No records found.</td></tr>
-                        ) : (
-                            reportData.map((record, index) => (
-                                <tr key={index}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.b_date}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.b_id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.customer_name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.mobile}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.reason}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.staff_name}</td>
+                <div className="table-wrap" style={{ background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', overflow: 'hidden' }}>
+                    <table style={{ margin: 0 }}>
+                        <thead style={{ background: '#f8fafc' }}>
+                            <tr>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Timestamp Log</th>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Booking Ref</th>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Client Sector</th>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Telecom Hash</th>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em', minWidth: 200 }}>Termination Heuristic</th>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Executing Node</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>sync</span>
+                                            <div>Querying termination records...</div>
+                                        </div>
+                                    </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : !searched ? (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>date_range</span>
+                                            <div>Declare temporal boundaries to initiate query.</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : !Array.isArray(reportData) || reportData.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>verified</span>
+                                            <div>No anomalous terminations detected in this timeframe.</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                reportData.map((record, index) => (
+                                    <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                        <td style={{ padding: '12px 24px', fontWeight: 600, color: '#475569', fontSize: 13 }}>{record.b_date}</td>
+                                        <td style={{ padding: '12px 24px', fontWeight: 800, color: '#023149', fontFamily: 'monospace', fontSize: 13 }}>#{record.b_id}</td>
+                                        <td style={{ padding: '12px 24px', fontWeight: 700, color: '#334155' }}>{record.customer_name}</td>
+                                        <td style={{ padding: '12px 24px', fontWeight: 600, color: '#475569', fontSize: 13 }}>{record.mobile}</td>
+                                        <td style={{ padding: '12px 24px' }}>
+                                            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '6px 12px', borderRadius: 6, fontSize: 13, fontWeight: 600, display: 'inline-block' }}>
+                                                {record.reason}
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '12px 24px', fontStyle: 'italic', color: '#64748b', fontSize: 13 }}>{record.staff_name}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

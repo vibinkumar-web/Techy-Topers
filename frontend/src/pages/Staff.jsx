@@ -1,8 +1,14 @@
 import { useState, useEffect, useContext } from 'react';
-import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
+        
+
+        
+
+import AuthContext from '../context/AuthContext';
 const Staff = () => {
-    const { api } = useContext(AuthContext);
+    const toast = useToast();
+const { api } = useContext(AuthContext);
     const [staffList, setStaffList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -44,23 +50,24 @@ const Staff = () => {
         }
     };
 
-    const handleInputChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        if (name === 'emp_status') {
-            // For radio/checkbox handling if needed, but here we use select or value logic
-            setFormData({ ...formData, [name]: value });
-        } else {
-            setFormData({ ...formData, [name]: value });
-        }
+    
+        
+const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
     };
 
-    const openNewModal = () => {
+    
+        
+const handleAdd = () => {
         setFormData(initialFormState);
         setIsEdit(false);
         setShowModal(true);
     };
 
-    const openEditModal = (staff) => {
+    
+        
+const handleEdit = (staff) => {
         setFormData(staff);
         setIsEdit(true);
         setShowModal(true);
@@ -71,192 +78,245 @@ const Staff = () => {
         try {
             if (isEdit) {
                 await api.put('/staff.php', formData);
-                alert('Staff updated successfully');
+                toast('Staff updated successfully');
             } else {
                 await api.post('/staff.php', formData);
-                alert('Staff created successfully');
+                toast('Staff created successfully');
             }
             setShowModal(false);
             fetchStaff();
         } catch (error) {
             console.error("Error saving staff", error);
-            alert('Failed to save operation');
+            toast('Failed to save operation', 'error');
         }
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Staff Management</h1>
-                <button
-                    onClick={openNewModal}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center"
-                >
-                    <span className="mr-2">+</span> Add New
-                </button>
+        <div className="page-wrap">
+            <div className="page-header">
+                <div>
+                    <div>
+                        <h1>Personnel Directory</h1>
+                        <p>Manage employee records, security scopes, and organizational statuses</p>
+                    </div>
+                    <button className="btn-primary" onClick={openNewModal} style={{ background: '#023149' }} onMouseEnter={e => e.currentTarget.style.background = '#012030'} onMouseLeave={e => e.currentTarget.style.background = '#023149'}>
+                        <span className="material-icons" style={{ fontSize: 18 }}>person_add</span>
+                        Provision New Agent
+                    </button>
+                </div>
             </div>
 
-            <div className="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {loading ? (
-                            <tr><td colSpan="6" className="text-center py-4">Loading...</td></tr>
-                        ) : staffList.length === 0 ? (
-                            <tr><td colSpan="6" className="text-center py-4">No staff found.</td></tr>
-                        ) : (
-                            staffList.map((staff) => (
-                                <tr key={staff.emp_id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{staff.emp_id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{staff.name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.u_type}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{staff.mobile}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${staff.emp_status === '0' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                            }`}>
-                                            {staff.emp_status === '0' ? 'Working' : 'Resigned'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button onClick={() => openEditModal(staff)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
+            <div className="page-body">
+                <div className="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Personnel ID</th>
+                                <th>Name / Legal Identity</th>
+                                <th>Security Designation</th>
+                                <th>Primary Contact</th>
+                                <th>Operational Status</th>
+                                <th style={{ textAlign: 'right' }}>Management</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>sync</span>
+                                            <div>Loading active organizational directory...</div>
+                                        </div>
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : staffList.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>groups</span>
+                                            <div>No authenticated personnel entries found within scope.</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                staffList.map((staff) => (
+                                    <tr key={staff.emp_id}>
+                                        <td style={{ fontFamily: 'monospace', fontWeight: 800, color: '#023149', fontSize: 13 }}>{staff.emp_id}</td>
+                                        <td style={{ fontWeight: 800, color: '#023149' }}>{staff.name}</td>
+                                        <td>
+                                            <span className="badge badge-gray" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569' }}>
+                                                {staff.u_type}
+                                            </span>
+                                        </td>
+                                        <td style={{ fontWeight: 600, color: '#475569' }}>{staff.mobile}</td>
+                                        <td>
+                                            <span className={`badge ${staff.emp_status === '0' ? 'badge-green' : 'badge-red'}`}>
+                                                {staff.emp_status === '0' ? 'Active Scope' : 'Access Revoked'}
+                                            </span>
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button
+                                                className="btn-ghost"
+                                                onClick={() => openEditModal(staff)}
+                                                style={{ padding: '6px 16px', color: '#0284c7', borderColor: '#bae6fd', background: '#f0f9ff' }}
+                                                onMouseEnter={e => e.currentTarget.style.background = '#e0f2fe'}
+                                                onMouseLeave={e => e.currentTarget.style.background = '#f0f9ff'}
+                                            >
+                                                <span className="material-icons" style={{ fontSize: 16 }}>manage_accounts</span>
+                                                Modify Config
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            {/* Modal */}
+            {/* Config Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
-                    <div className="relative bg-white rounded-lg shadow-xl p-8 w-full max-w-4xl m-4 max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-semibold text-gray-900">{isEdit ? 'Edit Staff' : 'Add New Staff'}</h3>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-500">
-                                <span className="text-2xl">&times;</span>
+                <div className="modal-overlay">
+                    <div className="modal" style={{ maxWidth: 840 }}>
+                        <div className="modal-header">
+                            <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span className="material-icons" style={{ color: '#023149' }}>{isEdit ? 'admin_panel_settings' : 'badge'}</span>
+                                {isEdit ? `Modifying Entity Protocol: ${formData.emp_id}` : 'Provisioning New Internal Entity'}
+                            </h2>
+                            <button onClick={() => setShowModal(false)}>
+                                <span className="material-icons">close</span>
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Personal Details */}
-                            <div className="space-y-4">
-                                <h4 className="font-medium text-gray-700 border-b pb-2">Personal Details</h4>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" required />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Mobile</label>
-                                    <input type="text" name="mobile" value={formData.mobile} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" required />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">DOB</label>
-                                    <input type="date" name="dob" value={formData.dob} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Address</label>
-                                    <textarea name="address" value={formData.address} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" rows="2"></textarea>
+                        <form id="staffForm" onSubmit={handleSubmit} style={{ overflowY: 'auto', maxHeight: '75vh' }}>
+                            <div className="modal-body" style={{ padding: 32, paddingBottom: 16 }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 40 }}>
+
+                                    {/* KYC & Identity Schema */}
+                                    <div>
+                                        <h3 style={{ margin: '0 0 20px', fontSize: 13, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                                            <span className="material-icons" style={{ fontSize: 18, color: '#023149' }}>assignment_ind</span>
+                                            KYC &amp; Core Identity Schema
+                                        </h3>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label htmlFor="name">Legal Name Registry <span style={{ color: '#c5111a' }}>*</span></label>
+                                                <input type="text" id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                                            </div>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label htmlFor="mobile">Primary Telephonic Node <span style={{ color: '#c5111a' }}>*</span></label>
+                                                <input type="text" id="mobile" name="mobile" value={formData.mobile} onChange={handleInputChange} required />
+                                            </div>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label htmlFor="email">Authorized Electronic Mail</label>
+                                                <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} />
+                                            </div>
+                                            <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Date of Birth</label>
+                                                    <input type="date" name="dob" value={formData.dob} onChange={handleInputChange} />
+                                                </div>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Commissioning Date</label>
+                                                    <input type="date" name="j_date" value={formData.j_date} onChange={handleInputChange} />
+                                                </div>
+                                            </div>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>Verified Postal Matrix</label>
+                                                <textarea name="address" value={formData.address} onChange={handleInputChange} rows="3" style={{ resize: 'vertical', minHeight: 88 }}></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Sec & Compensation Logic */}
+                                    <div>
+                                        <h3 style={{ margin: '0 0 20px', fontSize: 13, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                                            <span className="material-icons" style={{ fontSize: 18, color: '#c5111a' }}>security</span>
+                                            Security Scope &amp; Logic
+                                        </h3>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                                            <div style={{ background: '#f8fafc', padding: '16px 20px', borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>ACL Designation <span style={{ color: '#c5111a' }}>*</span></label>
+                                                    <select name="u_type" value={formData.u_type} onChange={handleInputChange} style={{ fontWeight: 600 }}>
+                                                        <option value="Admin">Tier 1: Architect / Admin</option>
+                                                        <option value="Manager">Tier 2: Regional Manager</option>
+                                                        <option value="Call Center Executive">Tier 3: Executive Agent</option>
+                                                    </select>
+                                                </div>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label htmlFor="pwd">Cryptographic Secret (PWD) <span style={{ color: '#c5111a' }}>*</span></label>
+                                                    <input type="text" id="pwd" name="pwd" value={formData.pwd} onChange={handleInputChange} required style={{ fontFamily: 'monospace', letterSpacing: '.1em' }} />
+                                                </div>
+                                            </div>
+
+                                            <div style={{ background: '#fdf6e8', padding: '16px 20px', borderRadius: 8, border: '1px solid #e8d4aa', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                                <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                                    <div className="form-field" style={{ margin: 0 }}>
+                                                        <label>Base Apportionment</label>
+                                                        <input type="number" name="salary" value={formData.salary} onChange={handleInputChange} placeholder="0.00" />
+                                                    </div>
+                                                    <div className="form-field" style={{ margin: 0 }}>
+                                                        <label>Required Timecycle</label>
+                                                        <input type="number" name="hrsp_day" value={formData.hrsp_day} onChange={handleInputChange} placeholder="8 Hrs" />
+                                                    </div>
+                                                </div>
+                                                <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                                    <div className="form-field" style={{ margin: 0 }}>
+                                                        <label>Flux Overtime (Alpha)</label>
+                                                        <input type="number" name="hrs_day" value={formData.hrs_day} onChange={handleInputChange} placeholder="0.00" />
+                                                    </div>
+                                                    <div className="form-field" style={{ margin: 0 }}>
+                                                        <label>Flux Overtime (Omega)</label>
+                                                        <input type="number" name="hrs_night" value={formData.hrs_night} onChange={handleInputChange} placeholder="0.00" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="form-field" style={{ margin: 0, padding: '12px 16px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: 8 }}>
+                                                <label style={{ marginBottom: 12 }}>Organizational Status Overrides</label>
+                                                <div style={{ display: 'flex', gap: 32 }}>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: '#15803d', fontWeight: 700 }}>
+                                                        <input type="radio" name="emp_status" value="0" checked={formData.emp_status === '0'} onChange={handleInputChange} />
+                                                        Active &amp; Bound
+                                                    </label>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: '#b91c1c', fontWeight: 700 }}>
+                                                        <input type="radio" name="emp_status" value="1" checked={formData.emp_status === '1'} onChange={handleInputChange} />
+                                                        Revoked (Resigned)
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            {formData.emp_status === '1' && (
+                                                <div className="form-field" style={{ margin: 0, animation: 'fadeIn 0.2s ease-out' }}>
+                                                    <label>Revocation Terminus Date</label>
+                                                    <input type="date" name="r_date" value={formData.r_date} onChange={handleInputChange} style={{ borderColor: '#fca5a5', background: '#fef2f2' }} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
-
-                            {/* Employment Details */}
-                            <div className="space-y-4">
-                                <h4 className="font-medium text-gray-700 border-b pb-2">Employment Details</h4>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">User Type</label>
-                                    <select name="u_type" value={formData.u_type} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2">
-                                        <option value="Admin">Admin</option>
-                                        <option value="Manager">Manager</option>
-                                        <option value="Call Center Executive">Call Center Executive</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Password</label>
-                                    <input type="text" name="pwd" value={formData.pwd} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" required />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Joining Date</label>
-                                    <input type="date" name="j_date" value={formData.j_date} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Monthly Salary</label>
-                                        <input type="text" name="salary" value={formData.salary} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Per Month</label>
-                                        <input type="text" name="per_month" value={formData.per_month} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-700">Hrs/Day</label>
-                                        <input type="text" name="hrsp_day" value={formData.hrsp_day} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-700">1Hr Sal (Day)</label>
-                                        <input type="text" name="hrs_day" value={formData.hrs_day} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-700">1Hr Sal (Nit)</label>
-                                        <input type="text" name="hrs_night" value={formData.hrs_night} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                                    <div className="mt-2 flex items-center space-x-4">
-                                        <label className="flex items-center">
-                                            <input type="radio" name="emp_status" value="0" checked={formData.emp_status === '0'} onChange={handleInputChange} className="mr-2" />
-                                            Working
-                                        </label>
-                                        <label className="flex items-center">
-                                            <input type="radio" name="emp_status" value="1" checked={formData.emp_status === '1'} onChange={handleInputChange} className="mr-2" />
-                                            Resigned
-                                        </label>
-                                    </div>
-                                </div>
-                                {formData.emp_status === '1' && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">Resigned Date</label>
-                                        <input type="date" name="r_date" value={formData.r_date} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="col-span-1 md:col-span-2 flex justify-end space-x-4 mt-4 pt-4 border-t">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                >
-                                    {isEdit ? 'Update Staff' : 'Create Staff'}
+                            <div className="modal-footer" style={{ padding: '24px 32px' }}>
+                                <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Terminate Process</button>
+                                <button type="submit" className="btn-primary" style={{ background: '#023149', height: 44, padding: '0 32px' }} onMouseEnter={e => e.currentTarget.style.background = '#012030'} onMouseLeave={e => e.currentTarget.style.background = '#023149'}>
+                                    <span className="material-icons" style={{ fontSize: 18 }}>gavel</span>
+                                    {isEdit ? 'Enforce Registry Changes' : 'Initialize Agent Record'}
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
-        </div>
+            <style>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(-4px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
+        </div >
     );
 };
 

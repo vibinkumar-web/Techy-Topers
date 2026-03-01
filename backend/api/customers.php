@@ -18,10 +18,11 @@ if ($method === 'GET') {
 
         if ($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $row['found'] = true;
             echo json_encode($row);
         } else {
-            http_response_code(404);
-            echo json_encode(array("message" => "Customer not found."));
+            http_response_code(200);
+            echo json_encode(array("found" => false, "message" => "Customer not found."));
         }
     } else {
          $query = "SELECT * FROM ft_cus_master LIMIT 50"; // Limit to prevent overload

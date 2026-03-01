@@ -1,14 +1,12 @@
 <?php
-header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+
 
 include_once '../config/db.php';
 
@@ -30,9 +28,16 @@ if ($method === 'GET') {
     $action = isset($data->action) ? $data->action : '';
 
     if ($action === 'login') {
-        $id_emp = $data->id_emp;
-        $emp_mobile = $data->emp_mobile;
-        $emp_name = $data->emp_name;
+        $id_emp = isset($data->id_emp) ? $data->id_emp : '';
+        $emp_mobile = isset($data->emp_mobile) ? $data->emp_mobile : '';
+        $emp_name = isset($data->emp_name) ? $data->emp_name : '';
+        
+        if (empty($id_emp)) {
+            http_response_code(400);
+            echo json_encode(array("message" => "Staff ID is required."));
+            exit;
+        }
+
         $login_time = date('Y-m-d H:i:s');
         $login_status = '1';
         $emp_login = '1';
@@ -45,7 +50,7 @@ if ($method === 'GET') {
 
         if ($stmt_check->rowCount() > 0) {
             http_response_code(400);
-            echo json_encode(array("message" => "Staff already logged in."));
+            echo json_encode(array("message" => "Staff already logged in. Please logout first."));
         } else {
             $query = "INSERT INTO f_login_status (id_emp, emp_mobile, emp_name, login_time, login_status, emp_login) 
                       VALUES (:id_emp, :emp_mobile, :emp_name, :login_time, :login_status, :emp_login)";
@@ -107,7 +112,10 @@ if ($method === 'GET') {
         $stmt->bindParam(":id_emp", $id_emp);
 
         if ($stmt->execute()) {
-            echo json_encode(array("message" => "Staff Logged Out Successfully."));
+            echo json_encode(array(
+                "message" => "Staff Logged Out Successfully.",
+                "duration_message" => "Shift Duration: $hrsp_day hrs $minscalc mins"
+            ));
         } else {
              http_response_code(503);
              echo json_encode(array("message" => "Unable to logout staff."));
@@ -118,3 +126,4 @@ if ($method === 'GET') {
     }
 }
 ?>
+

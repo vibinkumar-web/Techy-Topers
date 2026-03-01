@@ -1,8 +1,14 @@
 import { useState, useContext } from 'react';
-import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
+        
+
+        
+
+import AuthContext from '../context/AuthContext';
 const EditBooking = () => {
-    const { api } = useContext(AuthContext);
+    const toast = useToast();
+const { api } = useContext(AuthContext);
     const [bookingId, setBookingId] = useState('');
     const [bookingData, setBookingData] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -12,10 +18,6 @@ const EditBooking = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            // Workaround: Fetch all bookings via reports logic and find locally
-            // OR use a specific GET endpoint. 
-            // Accessing `bookings.php`? It fetches latest. 
-            // Let's use `reports.php?type=booking` again as it returns all booking history/active.
             const response = await api.get('/reports.php?type=booking&from_date=2000-01-01&to_date=2099-12-31');
             const found = response.data.find(b => b.b_id == bookingId);
 
@@ -23,18 +25,20 @@ const EditBooking = () => {
                 setBookingData(found);
                 setFormData(found);
             } else {
-                alert("Booking not found.");
+                toast("Booking not found.", 'error');
                 setBookingData(null);
             }
         } catch (error) {
             console.error("Error searching booking", error);
-            alert("Error searching booking.");
+            toast("Error searching booking.", 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleInputChange = (e) => {
+    
+        
+const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
@@ -43,100 +47,145 @@ const EditBooking = () => {
         e.preventDefault();
         try {
             await api.put('/booking_edit.php', { ...formData, b_id: bookingId });
-            alert('Booking Updated Successfully!');
+            toast('Booking Updated Successfully!');
             setBookingData(null);
             setBookingId('');
             setFormData({});
         } catch (error) {
             console.error("Error updating booking", error);
-            alert("Failed to update booking.");
+            toast("Failed to update booking.", 'error');
         }
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Booking</h1>
+        <div className="page-wrap">
+            <div className="page-header">
+                <div>
+                    <div>
+                        <h1>Edit Active Booking</h1>
+                        <p>Modify customer information, trip requirements, or schedules</p>
+                    </div>
+                </div>
+            </div>
 
-            <div className="bg-white shadow rounded-lg p-6 mb-8">
-                <form onSubmit={handleSearch} className="flex gap-4 items-end">
-                    <div className="flex-grow">
-                        <label className="block text-sm font-medium text-gray-700">Booking ID</label>
+            <div className="page-body">
+
+                <form className="section" onSubmit={handleSearch} style={{ display: 'flex', gap: 16, alignItems: 'flex-end', padding: 24, marginBottom: 32, maxWidth: 800 }}>
+                    <div className="form-field" style={{ flex: 1, margin: 0 }}>
+                        <label>Booking Reference ID <span style={{ color: '#c5111a' }}>*</span></label>
                         <input
                             type="text"
                             value={bookingId}
                             onChange={(e) => setBookingId(e.target.value)}
-                            className="mt-1 block w-full border rounded-md shadow-sm p-2"
-                            placeholder="Enter Booking ID"
+                            placeholder="e.g. 1025"
                             required
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
+                        className="btn-primary"
+                        style={{ height: 42, padding: '0 32px', opacity: loading ? 0.7 : 1, cursor: loading ? 'wait' : 'pointer', background: '#023149' }}
                     >
-                        {loading ? 'Searching...' : 'Search'}
+                        <span className="material-icons" style={{ fontSize: 18 }}>search</span>
+                        {loading && !bookingData ? 'Searching...' : 'Find Booking'}
                     </button>
                 </form>
+
+                {bookingData && (
+                    <div className="section" style={{ maxWidth: 1000 }}>
+                        <div style={{ padding: 32 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #fdf6e8', paddingBottom: 16, marginBottom: 24 }}>
+                                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#023149', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <span className="material-icons" style={{ color: '#c5111a', fontSize: 20 }}>edit_document</span>
+                                    Booking Details — #{bookingData.b_id}
+                                </h3>
+                                <span className="badge badge-yellow">Modify Mode</span>
+                            </div>
+
+                            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+
+                                    {/* Column 1: Customer Details */}
+                                    <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                        <h4 style={{ fontSize: 13, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e2e8f0', paddingBottom: 8, margin: 0 }}>Customer Info</h4>
+                                        <div className="form-grid" style={{ gridTemplateColumns: '1fr' }}>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>Customer Name <span style={{ color: '#c5111a' }}>*</span></label>
+                                                <input type="text" name="cus_name" value={formData.cus_name || ''} onChange={handleInputChange} required />
+                                            </div>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>Mobile Number <span style={{ color: '#c5111a' }}>*</span></label>
+                                                <input type="text" name="cus_mobile" value={formData.cus_mobile || ''} onChange={handleInputChange} required />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Column 2: Route & Timing */}
+                                    <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                        <h4 style={{ fontSize: 13, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e2e8f0', paddingBottom: 8, margin: 0 }}>Route &amp; Timing</h4>
+                                        <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>Pickup Time <span style={{ color: '#c5111a' }}>*</span></label>
+                                                <input type="datetime-local" name="pickup_time" value={formData.pickup_time || ''} onChange={handleInputChange} required />
+                                            </div>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>Booking Classification</label>
+                                                <select name="b_type" value={formData.b_type || ''} onChange={handleInputChange}>
+                                                    <option value="0">Current Request</option>
+                                                    <option value="1">Advance Booking</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>Pickup Point <span style={{ color: '#c5111a' }}>*</span></label>
+                                                <input type="text" name="pickup" value={formData.pickup || ''} onChange={handleInputChange} required />
+                                            </div>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>Destination Drop <span style={{ color: '#c5111a' }}>*</span></label>
+                                                <input type="text" name="drop_place" value={formData.drop_place || ''} onChange={handleInputChange} required />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Column 3: Vehicle Preferences */}
+                                    <div style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
+                                        <h4 style={{ fontSize: 13, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e2e8f0', paddingBottom: 8, margin: 0 }}>Vehicle Preferences</h4>
+                                        <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>Requested Vehicle / Class</label>
+                                                <input type="text" name="v_types" value={formData.v_types || ''} onChange={handleInputChange} placeholder="e.g. Sedan, Innova" />
+                                            </div>
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>A/C Preference</label>
+                                                <select name="ac_type" value={formData.ac_type || ''} onChange={handleInputChange}>
+                                                    <option value="AC">Air Conditioned (A/C)</option>
+                                                    <option value="Non AC">Non A/C</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-field" style={{ margin: 0, gridColumn: 'span 2' }}>
+                                                <label>Special Remarks / Internal Notes</label>
+                                                <input type="text" name="remarks" value={formData.remarks || ''} onChange={handleInputChange} placeholder="Any specific requirements..." />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 24, borderTop: '2px solid #fdf6e8' }}>
+                                    <button
+                                        type="submit"
+                                        className="btn-primary"
+                                        style={{ height: 44, padding: '0 32px', background: '#023149' }}
+                                    >
+                                        <span className="material-icons" style={{ fontSize: 18 }}>save_as</span>
+                                        Save Modifications
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
-
-            {bookingData && (
-                <div className="bg-white shadow rounded-lg p-6">
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Customer Name</label>
-                            <input type="text" name="cus_name" value={formData.cus_name || ''} onChange={handleInputChange} className="mt-1 w-full border rounded p-2" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Mobile</label>
-                            <input type="text" name="cus_mobile" value={formData.cus_mobile || ''} onChange={handleInputChange} className="mt-1 w-full border rounded p-2" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Pickup Place</label>
-                            <input type="text" name="pickup" value={formData.pickup || ''} onChange={handleInputChange} className="mt-1 w-full border rounded p-2" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Pickup Time</label>
-                            <input type="datetime-local" name="pickup_time" value={formData.pickup_time || ''} onChange={handleInputChange} className="mt-1 w-full border rounded p-2" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Drop Place</label>
-                            <input type="text" name="drop_place" value={formData.drop_place || ''} onChange={handleInputChange} className="mt-1 w-full border rounded p-2" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Vehicle Type</label>
-                            <input type="text" name="v_types" value={formData.v_types || ''} onChange={handleInputChange} className="mt-1 w-full border rounded p-2" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Booking Type</label>
-                            <select name="b_type" value={formData.b_type || ''} onChange={handleInputChange} className="mt-1 w-full border rounded p-2">
-                                <option value="0">Current</option>
-                                <option value="1">Advance</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">A/C Type</label>
-                            <select name="ac_type" value={formData.ac_type || ''} onChange={handleInputChange} className="mt-1 w-full border rounded p-2">
-                                <option value="AC">AC</option>
-                                <option value="Non AC">Non AC</option>
-                            </select>
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700">Remarks</label>
-                            <input type="text" name="remarks" value={formData.remarks || ''} onChange={handleInputChange} className="mt-1 w-full border rounded p-2" />
-                        </div>
-
-                        <div className="md:col-span-2 flex justify-end">
-                            <button
-                                type="submit"
-                                className="bg-green-600 text-white px-8 py-3 rounded-md hover:bg-green-700"
-                            >
-                                Update Booking
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
         </div>
     );
 };

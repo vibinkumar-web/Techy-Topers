@@ -1,193 +1,307 @@
-import { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useContext, useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
+
+const BG = '#023149';   /* dark blue nav background      */
+const ACCENT = '#689abb'; /* soft blue accent */
+const GOLD = '#fdf6e8';   /* Varden — brand accent (replaced Gold to stick to palette) */
 
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
-    const [isOpen, setIsOpen] = useState(false);
+    const location = useLocation();
+    const [open, setOpen] = useState(null);
+    const [mobileOpen, setMobileOpen] = useState(false);
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
+    const handleLogout = () => { logout(); navigate('/login'); };
+
+    /* close dropdown on outside click */
+    useEffect(() => {
+        const close = e => { if (!e.target.closest('[data-nav-dd]')) setOpen(null); };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, []);
+
+    /* close mobile menu on route change */
+    useEffect(() => { setMobileOpen(false); setOpen(null); }, [location.pathname]);
+
+    const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
+
+    // Reusable small sub-link
+    const Sub = ({ to, children }) => (
+        <Link
+            to={to}
+            onClick={() => setOpen(null)}
+            style={{
+                display: 'block', padding: '8px 16px', color: '#1e293b',
+                textDecoration: 'none', fontSize: '14px', fontWeight: 500,
+                transition: 'background 0.2s', borderRadius: '4px'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        >{children}</Link>
+    );
+
+    // Reusable nested submenu
+    const NestedMenu = ({ label, children }) => {
+        const [show, setShow] = useState(false);
+        return (
+            <div
+                style={{ position: 'relative' }}
+                onMouseEnter={() => setShow(true)}
+                onMouseLeave={() => setShow(false)}
+            >
+                <div
+                    style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        padding: '8px 16px', color: '#1e293b',
+                        cursor: 'default', fontSize: '14px', fontWeight: 500,
+                        transition: 'background 0.2s', borderRadius: '4px',
+                        background: show ? '#f1f5f9' : 'transparent'
+                    }}
+                >
+                    {label}
+                    <span className="material-icons" style={{ fontSize: 16 }}>chevron_right</span>
+                </div>
+                {show && (
+                    <div style={{
+                        position: 'absolute', top: 0, left: '100%', marginLeft: 4,
+                        background: '#fff', padding: 8, borderRadius: 8,
+                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
+                        minWidth: 180, border: '1px solid #e2e8f0', zIndex: 10
+                    }}>
+                        {children}
+                    </div>
+                )}
+            </div>
+        );
     };
 
-    // Helper for Dropdown Link
-    const NavLink = ({ to, children }) => (
-        <Link
-            to={to}
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
-            onClick={() => setIsOpen(false)}
-        >
-            {children}
-        </Link>
-    );
+    // Main dropdown item
+    const DD = ({ id, label, children }) => {
+        const active = open === id;
+        return (
+            <div data-nav-dd style={{ position: 'relative' }}>
+                <button
+                    onClick={() => setOpen(p => p === id ? null : id)}
+                    style={{
+                        border: 'none', cursor: 'pointer',
+                        color: active ? '#fff' : 'rgba(255,255,255,.8)',
+                        fontSize: '14px', fontWeight: 500,
+                        padding: '8px 12px', borderRadius: '8px',
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        letterSpacing: '.01em',
+                        background: active ? '#c5111a' : 'transparent',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = active ? '#c5111a' : 'rgba(255,255,255,.1)'; }}
+                    onMouseLeave={e => { if (!active) { e.currentTarget.style.color = 'rgba(255,255,255,.8)'; e.currentTarget.style.background = 'transparent'; } }}
+                >
+                    {label}
+                    <svg
+                        width="12" height="12" viewBox="0 0 20 20" fill="currentColor"
+                        style={{ opacity: .7, transform: active ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}
+                    >
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                    </svg>
+                </button>
 
-    // Helper for Mobile Link
-    const MobileLink = ({ to, children }) => (
-        <Link
-            to={to}
-            className="block text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-base font-medium"
-            onClick={() => setIsOpen(false)}
-        >
-            {children}
-        </Link>
-    );
-
-    const Dropdown = ({ title, children }) => (
-        <div className="relative group">
-            <button className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center">
-                <span>{title}</span>
-                <svg className="ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-            </button>
-            <div className="absolute left-0 mt-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 z-50">
-                <div className="py-1">
-                    {children}
-                </div>
+                {active && (
+                    <div style={{
+                        position: 'absolute', top: 'calc(100% + 8px)', left: 0,
+                        background: '#fff', borderRadius: '8px',
+                        boxShadow: '0 8px 32px rgba(0,0,0,.14)',
+                        border: '1px solid #e8d4aa',
+                        zIndex: 400, padding: '8px 0', minWidth: '200px',
+                    }}>
+                        {children}
+                    </div>
+                )}
             </div>
-        </div>
-    );
+        );
+    };
 
     return (
-        <nav className="bg-white shadow-md relative z-40">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16 items-center">
-                    <div className="flex-shrink-0 flex items-center">
-                        <Link to="/" className="text-2xl font-bold text-indigo-600">
-                            Taxi
-                        </Link>
-                    </div>
+        <nav style={{
+            background: BG,
+            position: 'sticky', top: 0, zIndex: 300,
+            boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+            borderBottom: '1px solid rgba(255,255,255,.1)',
+        }}>
+            {/* ── Inner wrapper: 1280px centered ── */}
+            <div style={{
+                maxWidth: 1280,
+                margin: '0 auto',
+                padding: '0 32px',
+                height: 64,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                position: 'relative',
+            }}>
 
-                    {/* Desktop Menu */}
-                    <div className="hidden md:flex space-x-1 items-center">
-                        {user ? (
-                            <>
-                                <Link to="/dashboard" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
-                                    Dashboard
-                                </Link>
+                {/* ── LEFT: Logo ── */}
+                <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', flexShrink: 0 }}>
+                    <span className="material-icons" style={{ fontSize: 24, color: GOLD }}>local_taxi</span>
+                    <span style={{ color: GOLD, fontSize: '20px', fontWeight: 900, letterSpacing: '-.3px', lineHeight: 1 }}>TaxiPro</span>
+                </Link>
 
-                                <Dropdown title="Operations">
-                                    <NavLink to="/bookings">Bookings</NavLink>
-                                    <NavLink to="/advance-bookings">Adv. Bookings</NavLink>
-                                    <NavLink to="/edit-booking">Edit Booking</NavLink>
-                                    <NavLink to="/display-bookings">Display Bookings</NavLink>
-                                    <NavLink to="/assignments">Assignments</NavLink>
-                                    <NavLink to="/assign-later">Assign Later</NavLink>
-                                    <NavLink to="/trip-closing">Trip Closing</NavLink>
-                                    <NavLink to="/edit-closed-trip">Edit Closed Trip</NavLink>
-                                    <NavLink to="/trip-refusal">Trip Refusal</NavLink>
-                                    <NavLink to="/ontrip">On Trip</NavLink>
-                                    <NavLink to="/local-trip-closing">Local Trip Closing</NavLink>
-                                </Dropdown>
+                {/* ── CENTER: Nav links (absolutely centered) ── */}
+                {user && (
+                    <div style={{
+                        position: 'absolute', left: '50%', top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        zIndex: 1,
+                    }}>
+                        <Link
+                            to="/dashboard"
+                            style={{
+                                color: isActive('/dashboard') ? '#fff' : 'rgba(255,255,255,.8)',
+                                textDecoration: 'none',
+                                fontSize: '14px', fontWeight: 500,
+                                padding: '8px 12px', borderRadius: '8px', letterSpacing: '.01em',
+                                background: isActive('/dashboard') ? '#c5111a' : 'transparent',
+                                display: 'inline-block',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = isActive('/dashboard') ? '#c5111a' : 'rgba(255,255,255,.1)'; }}
+                            onMouseLeave={e => { if (!isActive('/dashboard')) { e.currentTarget.style.color = 'rgba(255,255,255,.8)'; e.currentTarget.style.background = 'transparent'; } }}
+                        >Dashboard</Link>
 
-                                <Dropdown title="Fleet & Staff">
-                                    <NavLink to="/vehicles">Vehicles</NavLink>
-                                    <NavLink to="/vehicle-attendance">Vehicle Attendance</NavLink>
-                                    <NavLink to="/attached-vehicles">Attached Vehicles</NavLink>
-                                    <NavLink to="/staff">Staff</NavLink>
-                                    <NavLink to="/attendance">Staff Attendance</NavLink>
-                                </Dropdown>
 
-                                <Dropdown title="Reports">
-                                    <NavLink to="/reports">Reports Dashboard</NavLink>
-                                    <NavLink to="/staff-attendance-report">Staff Attendance Rpt</NavLink>
-                                    <NavLink to="/refusal-report">Refusal Report</NavLink>
-                                    <NavLink to="/cancel-report">Cancelled Bookings</NavLink>
-                                    <NavLink to="/company-report">Company Report</NavLink>
-                                    <NavLink to="/day-wise-report">Day Wise Report</NavLink>
-                                    <NavLink to="/enquiry-report">Enquiry Report</NavLink>
-                                    <NavLink to="/running-km-report">Running KM</NavLink>
-                                    <NavLink to="/user-activity-report">User Activity</NavLink>
-                                    <NavLink to="/vehicle-separate-report">Vehicle Report</NavLink>
-                                    <NavLink to="/booking-counts">Booking Counts</NavLink>
-                                </Dropdown>
 
-                                <Dropdown title="Admin">
-                                    <NavLink to="/tariff">Tariff Master</NavLink>
-                                    <NavLink to="/tariff-upload">Bulk Tariff Upload</NavLink>
-                                    <NavLink to="/customer-upload">Customer Upload</NavLink>
-                                    <NavLink to="/user-rights">User Rights</NavLink>
-                                    <NavLink to="/settings">Settings</NavLink>
-                                </Dropdown>
+                        <DD id="ops" label="Operations">
+                            <Sub to="/bookings">Bookings</Sub>
+                            <Sub to="/advance-bookings">Adv. Bookings</Sub>
+                            <Sub to="/edit-booking">Edit Booking</Sub>
+                            <Sub to="/display-bookings">Display Bookings</Sub>
+                            <div style={{ margin: '8px 0', borderTop: '1px solid #fdf6e8' }} />
+                            <Sub to="/assignments">Assignments</Sub>
+                            <Sub to="/assign-later">Assign Later</Sub>
+                            <div style={{ margin: '8px 0', borderTop: '1px solid #fdf6e8' }} />
+                            <Sub to="/trip-closing">Trip Closing</Sub>
+                            <Sub to="/edit-closed-trip">Edit Closed Trip</Sub>
+                            <Sub to="/trip-refusal">Trip Refusal</Sub>
+                            <Sub to="/ontrip">On Trip</Sub>
+                            <Sub to="/local-trip-closing">Local Trip Closing</Sub>
+                        </DD>
 
-                                <span className="text-gray-500 text-sm ml-4">
-                                    {user.name}
-                                </span>
-                                <button
-                                    onClick={handleLogout}
-                                    className="ml-4 bg-white text-gray-700 hover:text-red-600 border border-gray-300 px-3 py-2 rounded-md text-sm font-medium"
-                                >
-                                    Logout
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                <Link to="/login" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
-                                    Login
-                                </Link>
-                                <Link to="/register" className="ml-4 bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-md text-sm font-medium">
-                                    Register
-                                </Link>
-                            </>
+                        <DD id="fleet" label="Fleet & Staff">
+                            <Sub to="/vehicles">Vehicles</Sub>
+                            <Sub to="/vehicle-attendance">Vehicle Attendance</Sub>
+                            <Sub to="/vehicle-in-out">Vehicle In & Out</Sub>
+                            <Sub to="/attached-vehicles">Attached Vehicles</Sub>
+                            {user.role === 'admin' && (<>
+                                <div style={{ margin: '8px 0', borderTop: '1px solid #fdf6e8' }} />
+                                <Sub to="/staff">Staff Master</Sub>
+                                <Sub to="/attendance">Staff Attendance</Sub>
+                            </>)}
+                        </DD>
+
+                        <Link
+                            to="/finance"
+                            style={{
+                                color: isActive('/finance') ? '#fff' : 'rgba(255,255,255,.8)',
+                                textDecoration: 'none',
+                                fontSize: '14px', fontWeight: 500,
+                                padding: '8px 12px', borderRadius: '8px', letterSpacing: '.01em',
+                                background: isActive('/finance') ? '#c5111a' : 'transparent',
+                                display: 'inline-block',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = isActive('/finance') ? '#c5111a' : 'rgba(255,255,255,.1)'; }}
+                            onMouseLeave={e => { if (!isActive('/finance')) { e.currentTarget.style.color = 'rgba(255,255,255,.8)'; e.currentTarget.style.background = 'transparent'; } }}
+                        >Ledger</Link>
+
+                        <DD id="reports" label="Reports">
+                            <Sub to="/vehicle-separate-report">Vechile Report</Sub>
+                            <Sub to="/shortage-km-report">Shortage KM Report</Sub>
+                            <Sub to="/customer-report">Customer Report</Sub>
+                            <Sub to="/staff-attendance-report">Staff Report</Sub>
+
+                            <NestedMenu label="Booking">
+                                <Sub to="/booking-counts">Booking Count</Sub>
+                                <Sub to="/cancel-report">Cancelled</Sub>
+                                <Sub to="/enquiry-report">Enquiry</Sub>
+                                <Sub to="#">No Cab</Sub>
+                                <Sub to="/refusal-report">Refused</Sub>
+                            </NestedMenu>
+
+                            <Sub to="/company-report">Company Wise</Sub>
+                            <Sub to="/running-km-report">Running KM</Sub>
+                            <Sub to="/day-wise-report">Day Wise Customer</Sub>
+                            <Sub to="/vehicle-attendance">Vechile Attendance</Sub>
+                        </DD>
+
+                        {user.role === 'admin' && (
+                            <DD id="admin" label="Admin">
+                                <Sub to="/tariff">Tariff Master</Sub>
+                                <Sub to="/tariff-upload">Bulk Tariff Upload</Sub>
+                                <Sub to="/customer-upload">Customer Upload</Sub>
+                                <Sub to="/user-rights">User Rights</Sub>
+                                <Sub to="/settings">Settings</Sub>
+                            </DD>
                         )}
                     </div>
+                )}
 
-                    {/* Mobile Menu Button */}
-                    <div className="flex md:hidden">
+                {/* ── RIGHT: user info + logout ── */}
+                {user ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, zIndex: 2 }}>
+                        {/* Notification bell */}
                         <button
-                            onClick={() => setIsOpen(!isOpen)}
-                            className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-indigo-600 focus:outline-none"
+                            title="Notifications"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', color: 'rgba(255,255,255,.6)' }}
+                            onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,.6)'}
                         >
-                            <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                {isOpen ? (
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                ) : (
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                )}
-                            </svg>
+                            <span className="material-icons" style={{ fontSize: 24 }}>notifications_none</span>
+                        </button>
+
+                        {/* Username chip */}
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)',
+                            borderRadius: 24, padding: '4px 16px 4px 4px',
+                        }}>
+                            <div style={{
+                                width: 24, height: 24, borderRadius: '50%',
+                                background: '#c5111a', color: '#fff',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 12, fontWeight: 800, flexShrink: 0,
+                            }}>
+                                {user.name?.charAt(0).toUpperCase() || 'U'}
+                            </div>
+                            <span style={{ color: '#fdf6e8', fontSize: '14px', fontWeight: 600 }}>
+                                {user.name}
+                            </span>
+                        </div>
+
+                        {/* Logout */}
+                        <button
+                            onClick={handleLogout}
+                            style={{
+                                background: '#c5111a', color: '#fff', border: 'none',
+                                borderRadius: '8px', padding: '8px 16px',
+                                fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', gap: 8,
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#7d0907'}
+                            onMouseLeave={e => e.currentTarget.style.background = '#c5111a'}
+                        >
+                            <span className="material-icons" style={{ fontSize: 16 }}>logout</span>
+                            Logout
                         </button>
                     </div>
-                </div>
-            </div>
-
-            {/* Mobile Menu */}
-            {isOpen && (
-                <div className="md:hidden">
-                    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-lg">
-                        {user ? (
-                            <>
-                                <MobileLink to="/dashboard">Dashboard</MobileLink>
-                                <div className="border-t border-gray-200 pt-2">
-                                    <p className="px-3 text-xs font-semibold text-gray-400 uppercase">Operations</p>
-                                    <MobileLink to="/bookings">Bookings</MobileLink>
-                                    <MobileLink to="/assignments">Assignments</MobileLink>
-                                    <MobileLink to="/trip-closing">Trip Closing</MobileLink>
-                                </div>
-                                <div className="border-t border-gray-200 pt-2">
-                                    <p className="px-3 text-xs font-semibold text-gray-400 uppercase">Reports</p>
-                                    <MobileLink to="/reports">All Reports</MobileLink>
-                                </div>
-                                <div className="border-t border-gray-200 pt-2">
-                                    <span className="block px-3 py-2 text-sm text-gray-500">Welcome, {user.name}</span>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full text-left block text-red-600 px-3 py-2 rounded-md text-base font-medium"
-                                    >
-                                        Logout
-                                    </button>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <MobileLink to="/login">Login</MobileLink>
-                                <MobileLink to="/register">Register</MobileLink>
-                            </>
-                        )}
+                ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, zIndex: 2 }}>
+                        <Link to="/login" style={{
+                            color: 'rgba(255,255,255,.75)', textDecoration: 'none',
+                            fontSize: '14px', fontWeight: 500,
+                        }}>Log In</Link>
+                        <Link to="/register" style={{
+                            background: ACCENT, color: '#fff', borderRadius: '8px',
+                            padding: '8px 16px', fontSize: '14px', fontWeight: 700, textDecoration: 'none',
+                        }}>Register</Link>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </nav>
     );
 };

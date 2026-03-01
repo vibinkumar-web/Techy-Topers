@@ -24,8 +24,16 @@ if ($method === 'GET') {
              echo json_encode(array("message" => "Trip not found."));
         }
     } else {
-         http_response_code(400);
-         echo json_encode(array("message" => "Missing b_id."));
+        // If no b_id is provided, list all active trips that can be closed
+        $query = "SELECT * FROM f_ontrip WHERE already_assign = '1' ORDER BY assign_time DESC";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        
+        $trips = array();
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            array_push($trips, $row);
+        }
+        echo json_encode($trips);
     }
 
 } elseif ($method === 'POST') {
@@ -42,12 +50,12 @@ if ($method === 'GET') {
         $remarks = $data->remarks;
         $p_date = date('Y-m-d'); // Current date
         $d_date = date('Y-m-d');
-        $ac_type = $data->ac_value_new; // Value from form usually price
+        $ac_type = $data->ac_value_new ?? $data->ac_type ?? ''; // Fallback for dynamic payloads
         $t_type = $data->t_type;
         $v_type = $data->v_type;
         $p_city = $data->p_city;
         $d_place = $data->d_place;
-        $rwads_point = $data->rwads_point;
+        $rwads_point = $data->rwads_point ?? 0;
         $package_name = $data->package_name ?? '';
         $pack_charges = $data->pack_charges ?? 0;
         $waiting_charges = $data->waiting_charges ?? 0;
@@ -60,8 +68,8 @@ if ($method === 'GET') {
         $paid_amount = $data->paid_amount;
         $discount = $data->discount ?? 0;
         $dis_reason = $data->dis_reason ?? '';
-        $to_whom = $data->company;
-        $customer = $data->b_name;
+        $to_whom = $data->company ?? $data->to_whom ?? '';
+        $customer = $data->b_name ?? $data->customer ?? '';
         $m_no = $data->m_no;
         $d_mobile = $data->d_mobile;
         $user_id = $data->user_id;
@@ -157,6 +165,12 @@ if ($method === 'GET') {
              $tStmt->bindParam(":closing_km", $closing_km);
              $tStmt->bindParam(":b_id", $b_id);
              $tStmt->execute();
+
+             // Mark booking as completed
+             $bkQuery = "UPDATE f_ft_booking SET booking_status='1' WHERE b_id = :b_id";
+             $bkStmt = $db->prepare($bkQuery);
+             $bkStmt->bindParam(":b_id", $b_id);
+             $bkStmt->execute();
              
              http_response_code(200);
              echo json_encode(array("message" => "Trip closed successfully."));

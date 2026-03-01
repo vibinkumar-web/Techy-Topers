@@ -1,0 +1,601 @@
+﻿
+> frontend@0.0.0 test
+> vitest Staff.test.jsx --run
+
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Users/LENOVO/Desktop/Taxi-new-ui/frontend[39m
+
+ [31mÔØ»[39m src/pages/__tests__/Staff.test.jsx [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1010[2mms[22m[39m
+   [32mÔ£ô[39m renders staff table with directory data[32m 83[2mms[22m[39m
+   [32mÔ£ô[39m opens modal to add new staff[32m 199[2mms[22m[39m
+   [32mÔ£ô[39m opens modal to edit existing staff[32m 96[2mms[22m[39m
+   [32mÔ£ô[39m submits new staff data[32m 159[2mms[22m[39m
+[31m   [31m├ù[31m submits edited staff data[39m[33m 472[2mms[22m[39m
+node.exe : 
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Users\LENOVO\AppData\Roaming ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String 
+   ) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[39m[1m[41m Failed 
+Tests 1 [49m[22m[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[39m
+
+[41m[1m FAIL [22m[49m 
+src/pages/__tests__/Staff.test.jsx[2m > 
+[22msubmits edited staff data
+[31m[1mTestingLibraryElementError[22m[39m: 
+Unable to find an element with the role "form"
+
+Here are the available roles:
+
+  heading:
+
+  Name "Personnel Directory":
+  [36m<h1 />[39m
+
+  Name "admin_panel_settingsModifying Entity 
+Protocol: EMP001":
+  [36m<h2[39m
+    [33mstyle[39m=[32m"display: flex; 
+align-items: center; gap: 8px;"[39m
+  [36m/>[39m
+
+  Name "assignment_indKYC & Core Identity Schema":
+  [36m<h3[39m
+    [33mstyle[39m=[32m"margin: 0px 0px 20px; 
+font-size: 13px; font-weight: 800; color: rgb(107, 
+114, 128); text-transform: uppercase; 
+letter-spacing: 0.05em; display: flex; align-items: 
+center; gap: 8px; border-bottom: 1px solid rgb(226, 
+232, 240); padding-bottom: 12px;"[39m
+  [36m/>[39m
+
+  Name "securitySecurity Scope & Logic":
+  [36m<h3[39m
+    [33mstyle[39m=[32m"margin: 0px 0px 20px; 
+font-size: 13px; font-weight: 800; color: rgb(107, 
+114, 128); text-transform: uppercase; 
+letter-spacing: 0.05em; display: flex; align-items: 
+center; gap: 8px; border-bottom: 1px solid rgb(226, 
+232, 240); padding-bottom: 12px;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p />[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "person_addProvision New Agent":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn-primary"[39m
+    [33mstyle[39m=[32m"background: rgb(2, 49, 
+73);"[39m
+  [36m/>[39m
+
+  Name "manage_accountsModify Config":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn-ghost"[39m
+    [33mstyle[39m=[32m"padding: 6px 16px; color: 
+rgb(2, 132, 199); border-color: rgb(186, 230, 253); 
+background: rgb(240, 249, 255);"[39m
+  [36m/>[39m
+
+  Name "manage_accountsModify Config":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn-ghost"[39m
+    [33mstyle[39m=[32m"padding: 6px 16px; color: 
+rgb(2, 132, 199); border-color: rgb(186, 230, 253); 
+background: rgb(240, 249, 255);"[39m
+  [36m/>[39m
+
+  Name "close":
+  [36m<button />[39m
+
+  Name "Terminate Process":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn-ghost"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "gavelEnforce Registry Changes":
+  [36m<button[39m
+    [33mclass[39m=[32m"btn-primary"[39m
+    [33mform[39m=[32m"staffForm"[39m
+    [33mstyle[39m=[32m"background: rgb(2, 49, 
+73); height: 44px; padding: 0px 32px;"[39m
+    [33mtype[39m=[32m"submit"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  table:
+
+  Name "":
+  [36m<table />[39m
+
+  --------------------------------------------------
+  rowgroup:
+
+  Name "":
+  [36m<thead />[39m
+
+  Name "":
+  [36m<tbody />[39m
+
+  --------------------------------------------------
+  row:
+
+  Name "Personnel ID Name / Legal Identity Security 
+Designation Primary Contact Operational Status 
+Management":
+  [36m<tr />[39m
+
+  Name "EMP001 Alice Admin Admin 1111111111 Active 
+Scope manage_accountsModify Config":
+  [36m<tr />[39m
+
+  Name "EMP002 Bob Executive Call Center Executive 
+2222222222 Access Revoked manage_accountsModify 
+Config":
+  [36m<tr />[39m
+
+  --------------------------------------------------
+  columnheader:
+
+  Name "Personnel ID":
+  [36m<th />[39m
+
+  Name "Name / Legal Identity":
+  [36m<th />[39m
+
+  Name "Security Designation":
+  [36m<th />[39m
+
+  Name "Primary Contact":
+  [36m<th />[39m
+
+  Name "Operational Status":
+  [36m<th />[39m
+
+  Name "Management":
+  [36m<th[39m
+    [33mstyle[39m=[32m"text-align: right;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  cell:
+
+  Name "EMP001":
+  [36m<td[39m
+    [33mstyle[39m=[32m"font-family: monospace; 
+font-weight: 800; color: rgb(2, 49, 73); font-size: 
+13px;"[39m
+  [36m/>[39m
+
+  Name "Alice Admin":
+  [36m<td[39m
+    [33mstyle[39m=[32m"font-weight: 800; color: 
+rgb(2, 49, 73);"[39m
+  [36m/>[39m
+
+  Name "Admin":
+  [36m<td />[39m
+
+  Name "1111111111":
+  [36m<td[39m
+    [33mstyle[39m=[32m"font-weight: 600; color: 
+rgb(71, 85, 105);"[39m
+  [36m/>[39m
+
+  Name "Active Scope":
+  [36m<td />[39m
+
+  Name "manage_accountsModify Config":
+  [36m<td[39m
+    [33mstyle[39m=[32m"text-align: right;"[39m
+  [36m/>[39m
+
+  Name "EMP002":
+  [36m<td[39m
+    [33mstyle[39m=[32m"font-family: monospace; 
+font-weight: 800; color: rgb(2, 49, 73); font-size: 
+13px;"[39m
+  [36m/>[39m
+
+  Name "Bob Executive":
+  [36m<td[39m
+    [33mstyle[39m=[32m"font-weight: 800; color: 
+rgb(2, 49, 73);"[39m
+  [36m/>[39m
+
+  Name "Call Center Executive":
+  [36m<td />[39m
+
+  Name "2222222222":
+  [36m<td[39m
+    [33mstyle[39m=[32m"font-weight: 600; color: 
+rgb(71, 85, 105);"[39m
+  [36m/>[39m
+
+  Name "Access Revoked":
+  [36m<td />[39m
+
+  Name "manage_accountsModify Config":
+  [36m<td[39m
+    [33mstyle[39m=[32m"text-align: right;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  textbox:
+
+  Name "Legal Name Registry *":
+  [36m<input[39m
+    [33mid[39m=[32m"name"[39m
+    [33mname[39m=[32m"name"[39m
+    [33mrequired[39m=[32m""[39m
+    [33mtype[39m=[32m"text"[39m
+    [33mvalue[39m=[32m"Alice Edited"[39m
+  [36m/>[39m
+
+  Name "Primary Telephonic Node *":
+  [36m<input[39m
+    [33mid[39m=[32m"mobile"[39m
+    [33mname[39m=[32m"mobile"[39m
+    [33mrequired[39m=[32m""[39m
+    [33mtype[39m=[32m"text"[39m
+    [33mvalue[39m=[32m"1111111111"[39m
+  [36m/>[39m
+
+  Name "Authorized Electronic Mail":
+  [36m<input[39m
+    [33mid[39m=[32m"email"[39m
+    [33mname[39m=[32m"email"[39m
+    [33mtype[39m=[32m"email"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<textarea[39m
+    [33mname[39m=[32m"address"[39m
+    [33mrows[39m=[32m"3"[39m
+    [33mstyle[39m=[32m"resize: vertical; 
+min-height: 88px;"[39m
+  [36m/>[39m
+
+  Name "Cryptographic Secret (PWD) *":
+  [36m<input[39m
+    [33mid[39m=[32m"pwd"[39m
+    [33mname[39m=[32m"pwd"[39m
+    [33mrequired[39m=[32m""[39m
+    [33mstyle[39m=[32m"font-family: monospace; 
+letter-spacing: 0.1em;"[39m
+    [33mtype[39m=[32m"text"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  combobox:
+
+  Name "":
+  [36m<select[39m
+    [33mname[39m=[32m"u_type"[39m
+    [33mstyle[39m=[32m"font-weight: 600;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  option:
+
+  Name "Tier 1: Architect / Admin":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Admin"[39m
+  [36m/>[39m
+
+  Name "Tier 2: Regional Manager":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Manager"[39m
+  [36m/>[39m
+
+  Name "Tier 3: Executive Agent":
+  [36m<option[39m
+    [33mvalue[39m=[32m"Call Center Executive"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  spinbutton:
+
+  Name "":
+  [36m<input[39m
+    [33mname[39m=[32m"salary"[39m
+    [33mplaceholder[39m=[32m"0.00"[39m
+    [33mtype[39m=[32m"number"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<input[39m
+    [33mname[39m=[32m"hrsp_day"[39m
+    [33mplaceholder[39m=[32m"8 Hrs"[39m
+    [33mtype[39m=[32m"number"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<input[39m
+    [33mname[39m=[32m"hrs_day"[39m
+    [33mplaceholder[39m=[32m"0.00"[39m
+    [33mtype[39m=[32m"number"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<input[39m
+    [33mname[39m=[32m"hrs_night"[39m
+    [33mplaceholder[39m=[32m"0.00"[39m
+    [33mtype[39m=[32m"number"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  radio:
+
+  Name "Active & Bound":
+  [36m<input[39m
+    [33mchecked[39m=[32m""[39m
+    [33mname[39m=[32m"emp_status"[39m
+    [33mtype[39m=[32m"radio"[39m
+    [33mvalue[39m=[32m"0"[39m
+  [36m/>[39m
+
+  Name "Revoked (Resigned)":
+  [36m<input[39m
+    [33mname[39m=[32m"emp_status"[39m
+    [33mtype[39m=[32m"radio"[39m
+    [33mvalue[39m=[32m"1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-wrap"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-header"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div>[39m
+            [36m<h1>[39m
+              [0mPersonnel Directory[0m
+            [36m</h1>[39m
+            [36m<p>[39m
+              [0mManage employee records, security 
+scopes, and organizational statuses[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn-primary"[39m
+            [33mstyle[39m=[32m"background: rgb(2, 
+49, 73);"[39m
+          [36m>[39m
+            [36m<span[39m
+              
+[33mclass[39m=[32m"material-icons"[39m
+              [33mstyle[39m=[32m"font-size: 
+18px;"[39m
+            [36m>[39m
+              [0mperson_add[0m
+            [36m</span>[39m
+            [0mProvision New Agent[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-body"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"table-wrap"[39m
+        [36m>[39m
+          [36m<table>[39m
+            [36m<thead>[39m
+              [36m<tr>[39m
+                [36m<th>[39m
+                  [0mPersonnel ID[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mName / Legal Identity[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mSecurity Designation[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mPrimary Contact[0m
+                [36m</th>[39m
+                [36m<th>[39m
+                  [0mOperational Status[0m
+                [36m</th>[39m
+                [36m<th[39m
+                  [33mstyle[39m=[32m"text-align: 
+right;"[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m4 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 00:43:15
+[2m   Duration [22m 2.12s[2m (transform 89ms, setup 83ms, import 236ms, tests 1.01s, environment 640ms)[22m
+
+                [36m>[39m
+                  [0mManagement[0m
+                [36m</th>[39m
+              [36m</tr>[39m
+            [36m</thead>[39m
+            [36m<tbody>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"font-family: 
+monospace; font-weight: 800; color: rgb(2, 49, 73); 
+font-size: 13px;"[39m
+                [36m>[39m
+                  [0mEMP001[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"font-weight: 
+800; color: rgb(2, 49, 73);"[39m
+                [36m>[39m
+                  [0mAlice Admin[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"badge 
+badge-gray"[39m
+                    
+[33mstyle[39m=[32m"background: rgb(248, 250, 
+252); border: 1px solid rgb(226, 232, 240); color: 
+rgb(71, 85, 105);"[39m
+                  [36m>[39m
+                    [0mAdmin[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"font-weight: 
+600; color: rgb(71, 85, 105);"[39m
+                [36m>[39m
+                  [0m1111111111[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"badge 
+badge-green"[39m
+                  [36m>[39m
+                    [0mActive Scope[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"text-align: 
+right;"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    
+[33mclass[39m=[32m"btn-ghost"[39m
+                    [33mstyle[39m=[32m"padding: 
+6px 16px; color: rgb(2, 132, 199); border-color: 
+rgb(186, 230, 253); background: rgb(240, 249, 
+255);"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      
+[33mclass[39m=[32m"material-icons"[39m
+                      
+[33mstyle[39m=[32m"font-size: 16px;"[39m
+                    [36m>[39m
+                      [0mmanage_accounts[0m
+                    [36m</span>[39m
+                    [0mModify Config[0m
+                  [36m</button>[39m
+                [36m</td>[39m
+              [36m</tr>[39m
+              [36m<tr>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"font-family: 
+monospace; font-weight: 800; color: rgb(2, 49, 73); 
+font-size: 13px;"[39m
+                [36m>[39m
+                  [0mEMP002[0m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"font-weight: 
+800; color: rgb(2, 49, 73);"[39m
+                [36m>[39m
+                  [0mBob Executive[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"badge 
+badge-gray"[39m
+                    
+[33mstyle[39m=[32m"background: rgb(248, 250, 
+252); border: 1px solid rgb(226, 232, 240); color: 
+rgb(71, 85, 105);"[39m
+                  [36m>[39m
+                    [0mCall Center Executive[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"font-weight: 
+600; color: rgb(71, 85, 105);"[39m
+                [36m>[39m
+                  [0m2222222222[0m
+                [36m</td>[39m
+                [36m<td>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"badge 
+badge-red"[39m
+                  [36m>[39m
+                    [0mAccess Revoked[0m
+                  [36m</span>[39m
+                [36m</td>[39m
+                [36m<td[39m
+                  [33mstyle[39m=[32m"text-align: 
+right;"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    
+[33mclass[39m=[32m"btn-ghost"[39m
+                    [33mstyle[39m=[32m"padding: 
+6px 16px; color: rgb(2, 132, 199); border-color: 
+rgb(186, 230, 253); background: rgb(240, 249, 
+255);"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      
+[33mclass[39m=[32m"material-icons"[39m
+                      
+[33mstyle[39m=[32m"font-size: 16px;"[39m
+                    [36m>[39m
+                      [0mmanage_accounts[0m
+                    [36m</span>[39m
+                    [0mModify Config[0m
+                  [36m</button>[39m
+                [36m</td>[39m
+              [36m</tr>[39m
+            [36m</tbody>[39m
+          [36m</table>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"modal-overlay"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"modal"[39m
+          [33mstyle[39m=[32m"max-width: 
+840px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"modal-header"[39m
+        ...
+[90m [2mÔØ»[22m Object.getElementError node_module
+s/@testing-library/dom/dist/config.js:[2m37:19[22m
+[39m
+[90m [2mÔØ»[22m node_modules/@testing-library/dom/
+dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2mÔØ»[22m node_modules/@testing-library/dom/
+dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2mÔØ»[22m node_modules/@testing-library/dom/
+dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2mÔØ»[22m src/pages/__tests__/Staff.test.jsx
+:[2m151:25[22m[39m
+    [90m149| [39m
+    [90m150| [39m    [90m// Submit form[39m
+    [90m151| [39m    const form = 
+screen.getByRole('form', { hidden: true }); // By 
+defÔÇª
+    [90m   | [39m                        
+[31m^[39m
+    [90m152| [39m
+    [90m153| [39m    // Instead of clicking 
+button, let's trigger form submit or just cÔÇª
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/1]ÔÄ»[22m[39m
+
