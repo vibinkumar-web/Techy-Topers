@@ -1,14 +1,14 @@
 import { useState, useEffect, useContext } from 'react';
 import { useToast } from '../context/ToastContext';
 
-        
 
-        
+
+
 
 import AuthContext from '../context/AuthContext';
 const Staff = () => {
     const toast = useToast();
-const { api } = useContext(AuthContext);
+    const { api } = useContext(AuthContext);
     const [staffList, setStaffList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -42,7 +42,7 @@ const { api } = useContext(AuthContext);
     const fetchStaff = async () => {
         try {
             const response = await api.get('/staff.php');
-            setStaffList(response.data);
+            setStaffList(Array.isArray(response.data) ? response.data : []);
             setLoading(false);
         } catch (error) {
             console.error("Error fetching staff", error);
@@ -50,24 +50,24 @@ const { api } = useContext(AuthContext);
         }
     };
 
-    
-        
-const handleChange = (e) => {
+
+
+    const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
-    
-        
-const handleAdd = () => {
+
+
+    const handleAdd = () => {
         setFormData(initialFormState);
         setIsEdit(false);
         setShowModal(true);
     };
 
-    
-        
-const handleEdit = (staff) => {
+
+
+    const handleEdit = (staff) => {
         setFormData(staff);
         setIsEdit(true);
         setShowModal(true);
@@ -99,7 +99,7 @@ const handleEdit = (staff) => {
                         <h1>Personnel Directory</h1>
                         <p>Manage employee records, security scopes, and organizational statuses</p>
                     </div>
-                    <button className="btn-primary" onClick={openNewModal} style={{ background: '#023149' }} onMouseEnter={e => e.currentTarget.style.background = '#012030'} onMouseLeave={e => e.currentTarget.style.background = '#023149'}>
+                    <button className="btn-primary" onClick={handleAdd} style={{ background: '#023149' }} onMouseEnter={e => e.currentTarget.style.background = '#012030'} onMouseLeave={e => e.currentTarget.style.background = '#023149'}>
                         <span className="material-icons" style={{ fontSize: 18 }}>person_add</span>
                         Provision New Agent
                     </button>
@@ -157,7 +157,7 @@ const handleEdit = (staff) => {
                                         <td style={{ textAlign: 'right' }}>
                                             <button
                                                 className="btn-ghost"
-                                                onClick={() => openEditModal(staff)}
+                                                onClick={() => handleEdit(staff)}
                                                 style={{ padding: '6px 16px', color: '#0284c7', borderColor: '#bae6fd', background: '#f0f9ff' }}
                                                 onMouseEnter={e => e.currentTarget.style.background = '#e0f2fe'}
                                                 onMouseLeave={e => e.currentTarget.style.background = '#f0f9ff'}
@@ -201,29 +201,29 @@ const handleEdit = (staff) => {
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label htmlFor="name">Legal Name Registry <span style={{ color: '#c5111a' }}>*</span></label>
-                                                <input type="text" id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                                                <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label htmlFor="mobile">Primary Telephonic Node <span style={{ color: '#c5111a' }}>*</span></label>
-                                                <input type="text" id="mobile" name="mobile" value={formData.mobile} onChange={handleInputChange} required />
+                                                <input type="text" id="mobile" name="mobile" value={formData.mobile} onChange={handleChange} required />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label htmlFor="email">Authorized Electronic Mail</label>
-                                                <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} />
+                                                <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} />
                                             </div>
                                             <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Date of Birth</label>
-                                                    <input type="date" name="dob" value={formData.dob} onChange={handleInputChange} />
+                                                    <input type="date" name="dob" value={formData.dob} onChange={handleChange} />
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Commissioning Date</label>
-                                                    <input type="date" name="j_date" value={formData.j_date} onChange={handleInputChange} />
+                                                    <input type="date" name="j_date" value={formData.j_date} onChange={handleChange} />
                                                 </div>
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Verified Postal Matrix</label>
-                                                <textarea name="address" value={formData.address} onChange={handleInputChange} rows="3" style={{ resize: 'vertical', minHeight: 88 }}></textarea>
+                                                <textarea name="address" value={formData.address} onChange={handleChange} rows="3" style={{ resize: 'vertical', minHeight: 88 }}></textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -239,7 +239,7 @@ const handleEdit = (staff) => {
                                             <div style={{ background: '#f8fafc', padding: '16px 20px', borderRadius: 8, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 16 }}>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>ACL Designation <span style={{ color: '#c5111a' }}>*</span></label>
-                                                    <select name="u_type" value={formData.u_type} onChange={handleInputChange} style={{ fontWeight: 600 }}>
+                                                    <select name="u_type" value={formData.u_type} onChange={handleChange} style={{ fontWeight: 600 }}>
                                                         <option value="Admin">Tier 1: Architect / Admin</option>
                                                         <option value="Manager">Tier 2: Regional Manager</option>
                                                         <option value="Call Center Executive">Tier 3: Executive Agent</option>
@@ -247,7 +247,7 @@ const handleEdit = (staff) => {
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label htmlFor="pwd">Cryptographic Secret (PWD) <span style={{ color: '#c5111a' }}>*</span></label>
-                                                    <input type="text" id="pwd" name="pwd" value={formData.pwd} onChange={handleInputChange} required style={{ fontFamily: 'monospace', letterSpacing: '.1em' }} />
+                                                    <input type="text" id="pwd" name="pwd" value={formData.pwd} onChange={handleChange} required style={{ fontFamily: 'monospace', letterSpacing: '.1em' }} />
                                                 </div>
                                             </div>
 
@@ -255,21 +255,21 @@ const handleEdit = (staff) => {
                                                 <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                                                     <div className="form-field" style={{ margin: 0 }}>
                                                         <label>Base Apportionment</label>
-                                                        <input type="number" name="salary" value={formData.salary} onChange={handleInputChange} placeholder="0.00" />
+                                                        <input type="number" name="salary" value={formData.salary} onChange={handleChange} placeholder="0.00" />
                                                     </div>
                                                     <div className="form-field" style={{ margin: 0 }}>
                                                         <label>Required Timecycle</label>
-                                                        <input type="number" name="hrsp_day" value={formData.hrsp_day} onChange={handleInputChange} placeholder="8 Hrs" />
+                                                        <input type="number" name="hrsp_day" value={formData.hrsp_day} onChange={handleChange} placeholder="8 Hrs" />
                                                     </div>
                                                 </div>
                                                 <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                                                     <div className="form-field" style={{ margin: 0 }}>
                                                         <label>Flux Overtime (Alpha)</label>
-                                                        <input type="number" name="hrs_day" value={formData.hrs_day} onChange={handleInputChange} placeholder="0.00" />
+                                                        <input type="number" name="hrs_day" value={formData.hrs_day} onChange={handleChange} placeholder="0.00" />
                                                     </div>
                                                     <div className="form-field" style={{ margin: 0 }}>
                                                         <label>Flux Overtime (Omega)</label>
-                                                        <input type="number" name="hrs_night" value={formData.hrs_night} onChange={handleInputChange} placeholder="0.00" />
+                                                        <input type="number" name="hrs_night" value={formData.hrs_night} onChange={handleChange} placeholder="0.00" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -278,11 +278,11 @@ const handleEdit = (staff) => {
                                                 <label style={{ marginBottom: 12 }}>Organizational Status Overrides</label>
                                                 <div style={{ display: 'flex', gap: 32 }}>
                                                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: '#15803d', fontWeight: 700 }}>
-                                                        <input type="radio" name="emp_status" value="0" checked={formData.emp_status === '0'} onChange={handleInputChange} />
+                                                        <input type="radio" name="emp_status" value="0" checked={formData.emp_status === '0'} onChange={handleChange} />
                                                         Active &amp; Bound
                                                     </label>
                                                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: '#b91c1c', fontWeight: 700 }}>
-                                                        <input type="radio" name="emp_status" value="1" checked={formData.emp_status === '1'} onChange={handleInputChange} />
+                                                        <input type="radio" name="emp_status" value="1" checked={formData.emp_status === '1'} onChange={handleChange} />
                                                         Revoked (Resigned)
                                                     </label>
                                                 </div>
@@ -291,7 +291,7 @@ const handleEdit = (staff) => {
                                             {formData.emp_status === '1' && (
                                                 <div className="form-field" style={{ margin: 0, animation: 'fadeIn 0.2s ease-out' }}>
                                                     <label>Revocation Terminus Date</label>
-                                                    <input type="date" name="r_date" value={formData.r_date} onChange={handleInputChange} style={{ borderColor: '#fca5a5', background: '#fef2f2' }} />
+                                                    <input type="date" name="r_date" value={formData.r_date} onChange={handleChange} style={{ borderColor: '#fca5a5', background: '#fef2f2' }} />
                                                 </div>
                                             )}
                                         </div>
@@ -321,3 +321,4 @@ const handleEdit = (staff) => {
 };
 
 export default Staff;
+

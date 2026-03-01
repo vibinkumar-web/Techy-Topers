@@ -113,24 +113,24 @@ const handleChange = (e) => {
                                     <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                                         <div className="form-field" style={{ margin: 0 }}>
                                             <label>Customer Name</label>
-                                            <input type="text" name="customer" value={formData.customer || formData.b_name || ''} onChange={handleInputChange} />
+                                            <input type="text" name="customer" value={formData.customer || formData.b_name || ''} onChange={handleChange} />
                                         </div>
                                         <div className="form-field" style={{ margin: 0 }}>
                                             <label>Customer Contact</label>
-                                            <input type="text" name="m_no" value={formData.m_no || ''} onChange={handleInputChange} />
+                                            <input type="text" name="m_no" value={formData.m_no || ''} onChange={handleChange} />
                                         </div>
                                         <div className="form-field" style={{ margin: 0 }}>
                                             <label>Driver Contact</label>
-                                            <input type="text" name="d_mobile" value={formData.d_mobile || ''} onChange={handleInputChange} />
+                                            <input type="text" name="d_mobile" value={formData.d_mobile || ''} onChange={handleChange} />
                                         </div>
 
                                         <div className="form-field" style={{ margin: 0 }}>
                                             <label>Pickup Location</label>
-                                            <input type="text" name="p_city" value={formData.p_city || formData.picup_place || ''} onChange={handleInputChange} />
+                                            <input type="text" name="p_city" value={formData.p_city || formData.picup_place || ''} onChange={handleChange} />
                                         </div>
                                         <div className="form-field" style={{ margin: 0, gridColumn: 'span 2' }}>
                                             <label>Destination / Drop Place</label>
-                                            <input type="text" name="d_place" value={formData.d_place || formData.drop_place || ''} onChange={handleInputChange} />
+                                            <input type="text" name="d_place" value={formData.d_place || formData.drop_place || ''} onChange={handleChange} />
                                         </div>
                                     </div>
                                 </div>
@@ -140,11 +140,11 @@ const handleChange = (e) => {
                                     <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                                         <div className="form-field" style={{ margin: 0 }}>
                                             <label>Opening KM</label>
-                                            <input type="number" name="opening_km" value={formData.opening_km || ''} onChange={handleInputChange} />
+                                            <input type="number" name="opening_km" value={formData.opening_km || ''} onChange={handleChange} />
                                         </div>
                                         <div className="form-field" style={{ margin: 0 }}>
                                             <label>Closing KM</label>
-                                            <input type="number" name="closing_km" value={formData.closing_km || ''} onChange={handleInputChange} />
+                                            <input type="number" name="closing_km" value={formData.closing_km || ''} onChange={handleChange} />
                                         </div>
                                         <div className="form-field" style={{ margin: 0 }}>
                                             <label>Total Distance</label>
@@ -154,12 +154,12 @@ const handleChange = (e) => {
                                         </div>
                                         <div className="form-field" style={{ margin: 0 }}>
                                             <label>Net Trip Cost (₹)</label>
-                                            <input type="number" name="net_total" value={formData.net_total || ''} onChange={handleInputChange} style={{ fontWeight: 700, color: '#023149' }} />
+                                            <input type="number" name="net_total" value={formData.net_total || ''} onChange={handleChange} style={{ fontWeight: 700, color: '#023149' }} />
                                         </div>
 
                                         <div className="form-field" style={{ margin: 0 }}>
                                             <label>Amount Recieved (₹)</label>
-                                            <input type="number" name="paid_amount" value={formData.paid_amount || ''} onChange={handleInputChange} style={{ fontWeight: 700, color: '#15803d', borderColor: '#bbf7d0', background: '#f0fdf4' }} />
+                                            <input type="number" name="paid_amount" value={formData.paid_amount || ''} onChange={handleChange} style={{ fontWeight: 700, color: '#15803d', borderColor: '#bbf7d0', background: '#f0fdf4' }} />
                                         </div>
                                         <div className="form-field" style={{ margin: 0 }}>
                                             <label>Remaining Due (₹)</label>

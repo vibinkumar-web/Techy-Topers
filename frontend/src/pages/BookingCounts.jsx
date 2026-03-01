@@ -21,7 +21,7 @@ const BookingCounts = () => {
         setLoading(true);
         try {
             const response = await api.get(`/booking_counts.php?from_date=${filters.from_date}&to_date=${filters.to_date}`);
-            setStats(response.data);
+            setStats(Array.isArray(response.data) ? response.data : (response.data && typeof response.data === 'object' ? response.data : {}));
         } catch (error) {
             console.error("Error fetching stats", error);
         } finally {
@@ -142,3 +142,4 @@ const BookingCounts = () => {
 };
 
 export default BookingCounts;
+

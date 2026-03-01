@@ -21,7 +21,7 @@ const VehicleSeparateReport = () => {
             try {
                 const response = await api.get('/vehicles.php');
                 if (Array.isArray(response.data)) {
-                    setVehicles(response.data);
+                    setVehicles(Array.isArray(response.data) ? response.data : []);
                 }
             } catch (error) {
                 console.error("Error fetching vehicles", error);
@@ -40,7 +40,7 @@ const VehicleSeparateReport = () => {
         setSearched(true);
         try {
             const response = await api.get(`/vehicle_separate_report.php?v_id=${filters.v_id}&from_date=${filters.from_date}&to_date=${filters.to_date}`);
-            setReportData(response.data);
+            setReportData(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error("Error fetching report", error);
         } finally {
@@ -197,3 +197,5 @@ const VehicleSeparateReport = () => {
 };
 
 export default VehicleSeparateReport;
+
+

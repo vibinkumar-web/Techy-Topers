@@ -21,7 +21,7 @@ const ShortageKMReport = () => {
             try {
                 const response = await api.get('/vehicles.php');
                 if (Array.isArray(response.data)) {
-                    setVehicles(response.data);
+                    setVehicles(Array.isArray(response.data) ? response.data : []);
                 }
             } catch (error) {
                 console.error("Error fetching vehicles", error);
@@ -177,3 +177,4 @@ const ShortageKMReport = () => {
 };
 
 export default ShortageKMReport;
+

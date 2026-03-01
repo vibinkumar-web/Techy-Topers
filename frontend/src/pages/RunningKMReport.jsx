@@ -20,7 +20,7 @@ const RunningKMReport = () => {
         const fetchVehicles = async () => {
             try {
                 const response = await api.get('/running_km_report.php?list=true');
-                setVehicles(response.data);
+                setVehicles(Array.isArray(response.data) ? response.data : []);
             } catch (error) {
                 console.error("Error fetching vehicles", error);
             }
@@ -184,3 +184,4 @@ const RunningKMReport = () => {
 };
 
 export default RunningKMReport;
+

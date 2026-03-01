@@ -23,7 +23,7 @@ const DayWiseReport = () => {
         setSearched(true);
         try {
             const response = await api.get(`/day_wise_report.php?from_date=${filters.from_date}&to_date=${filters.to_date}`);
-            setReportData(response.data);
+            setReportData(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error("Error fetching report", error);
         } finally {
@@ -165,3 +165,4 @@ const DayWiseReport = () => {
 };
 
 export default DayWiseReport;
+

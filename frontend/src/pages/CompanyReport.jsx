@@ -20,7 +20,7 @@ const CompanyReport = () => {
         const fetchCompanies = async () => {
             try {
                 const response = await api.get('/company_report.php?list=true');
-                setCompanies(response.data);
+                setCompanies(Array.isArray(response.data) ? response.data : []);
             } catch (error) {
                 console.error("Error fetching companies", error);
             }

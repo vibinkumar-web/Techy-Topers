@@ -27,7 +27,7 @@ const { api } = useContext(AuthContext);
     const fetchAttendance = async () => {
         try {
             const response = await api.get('/attendance.php');
-            setAttendanceList(response.data);
+            setAttendanceList(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error("Error fetching attendance", error);
         }
@@ -145,7 +145,7 @@ const handleChange = (e) => {
                                     type="text"
                                     name="id_emp"
                                     value={formData.id_emp}
-                                    onChange={handleInputChange}
+                                    onChange={handleChange}
                                     required
                                     placeholder="Enter Staff ID..."
                                 />
@@ -167,7 +167,7 @@ const handleChange = (e) => {
                                     type="datetime-local"
                                     name="login_time"
                                     value={formData.login_time}
-                                    onChange={handleInputChange}
+                                    onChange={handleChange}
                                     style={{ fontSize: 13 }}
                                 />
                             </div>
@@ -307,3 +307,4 @@ const handleChange = (e) => {
 };
 
 export default StaffAttendance;
+

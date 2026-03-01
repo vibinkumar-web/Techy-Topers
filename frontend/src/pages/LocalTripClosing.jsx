@@ -33,7 +33,7 @@ const { api, user } = useContext(AuthContext);
     const fetchVehicles = async () => {
         try {
             const response = await api.get('/local_trip_closing.php');
-            setVehicles(response.data);
+            setVehicles(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error("Error fetching vehicles", error);
         }
@@ -42,7 +42,7 @@ const { api, user } = useContext(AuthContext);
     const fetchTariffs = async () => {
         try {
             const response = await api.get('/local_trip_closing.php?action=tariffs');
-            setTariffs(response.data);
+            setTariffs(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error("Error fetching tariffs", error);
         }
@@ -276,3 +276,5 @@ const calculateNetTotal = () => {
 };
 
 export default LocalTripClosing;
+
+

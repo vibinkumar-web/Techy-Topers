@@ -15,7 +15,7 @@ const AdvanceBooking = () => {
             try {
                 const response = await api.get('/advance_booking.php');
                 if (Array.isArray(response.data)) {
-                    setBookings(response.data);
+                    setBookings(Array.isArray(response.data) ? response.data : []);
                 } else {
                     setBookings([]);
                 }
@@ -123,3 +123,4 @@ const AdvanceBooking = () => {
 };
 
 export default AdvanceBooking;
+

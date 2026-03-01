@@ -1,14 +1,15 @@
 import { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
-        
 
-        
+
+
 
 const TripRefusal = () => {
     const toast = useToast();
-const { api, user } = useContext(AuthContext);
+    const { api, user } = useContext(AuthContext);
     const navigate = useNavigate();
     const [bookingId, setBookingId] = useState('');
     const [vehicleId, setVehicleId] = useState('');

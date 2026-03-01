@@ -19,7 +19,7 @@ const StaffAttendanceReport = () => {
         const fetchStaffIds = async () => {
             try {
                 const response = await api.get('/staff_report.php?list=true');
-                setStaffIds(response.data);
+                setStaffIds(Array.isArray(response.data) ? response.data : []);
             } catch (error) {
                 console.error("Error fetching staff IDs", error);
             }
@@ -189,3 +189,4 @@ const StaffAttendanceReport = () => {
 };
 
 export default StaffAttendanceReport;
+

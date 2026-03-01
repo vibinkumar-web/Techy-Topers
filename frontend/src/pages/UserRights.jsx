@@ -21,7 +21,7 @@ const UserRights = () => {
             try {
                 const response = await api.get('/user_rights.php');
                 if (Array.isArray(response.data)) {
-                    setStaff(response.data);
+                    setStaff(Array.isArray(response.data) ? response.data : []);
                 }
             } catch (error) {
                 console.error("Error fetching staff", error);
@@ -192,3 +192,4 @@ const UserRights = () => {
 };
 
 export default UserRights;
+

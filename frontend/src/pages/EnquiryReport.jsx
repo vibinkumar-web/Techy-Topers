@@ -24,7 +24,7 @@ const EnquiryReport = () => {
         try {
             const response = await api.get(`/enquiry_report.php?from_date=${filters.from_date}&to_date=${filters.to_date}`);
             if (Array.isArray(response.data)) {
-                setReportData(response.data);
+                setReportData(Array.isArray(response.data) ? response.data : []);
             } else {
                 setReportData([]);
             }
@@ -143,3 +143,4 @@ const EnquiryReport = () => {
 };
 
 export default EnquiryReport;
+

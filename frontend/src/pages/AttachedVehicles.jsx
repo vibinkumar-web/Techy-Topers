@@ -30,7 +30,7 @@ const { api } = useContext(AuthContext);
     const fetchVehicles = async () => {
         try {
             const response = await api.get('/attached_vehicles.php');
-            setVehicles(response.data);
+            setVehicles(Array.isArray(response.data) ? response.data : []);
             setLoading(false);
         } catch (error) {
             console.error("Error fetching vehicles", error);
@@ -163,15 +163,15 @@ const handleChange = (e) => {
                                             <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Internal Reference ID <span style={{ color: '#c5111a' }}>*</span></label>
-                                                    <input name="v_id" value={formData.v_id} onChange={handleInputChange} required readOnly={isEdit} style={{ background: isEdit ? '#f8fafc' : '#fff' }} />
+                                                    <input name="v_id" value={formData.v_id} onChange={handleChange} required readOnly={isEdit} style={{ background: isEdit ? '#f8fafc' : '#fff' }} />
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Registration Number <span style={{ color: '#c5111a' }}>*</span></label>
-                                                    <input name="v_no" value={formData.v_no} onChange={handleInputChange} required placeholder="State-Code-0000" />
+                                                    <input name="v_no" value={formData.v_no} onChange={handleChange} required placeholder="State-Code-0000" />
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Category <span style={{ color: '#c5111a' }}>*</span></label>
-                                                    <select name="v_cat" value={formData.v_cat} onChange={handleInputChange} required>
+                                                    <select name="v_cat" value={formData.v_cat} onChange={handleChange} required>
                                                         <option value="">Select Category</option>
                                                         <option value="Mini">Mini / Hatchback</option>
                                                         <option value="Sedan">Sedan</option>
@@ -182,15 +182,15 @@ const handleChange = (e) => {
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Joining / Partnership Date</label>
-                                                    <input name="joining" type="date" value={formData.joining} onChange={handleInputChange} />
+                                                    <input name="joining" type="date" value={formData.joining} onChange={handleChange} />
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Brand Make</label>
-                                                    <input name="v_brand" value={formData.v_brand} onChange={handleInputChange} placeholder="e.g. Toyota" />
+                                                    <input name="v_brand" value={formData.v_brand} onChange={handleChange} placeholder="e.g. Toyota" />
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Vehicle Model</label>
-                                                    <input name="v_model" value={formData.v_model} onChange={handleInputChange} placeholder="e.g. Innova" />
+                                                    <input name="v_model" value={formData.v_model} onChange={handleChange} placeholder="e.g. Innova" />
                                                 </div>
                                             </div>
                                         </div>
@@ -202,30 +202,30 @@ const handleChange = (e) => {
                                             <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Vendor / Owner Name</label>
-                                                    <input name="o_name" value={formData.o_name} onChange={handleInputChange} placeholder="Full legal name" />
+                                                    <input name="o_name" value={formData.o_name} onChange={handleChange} placeholder="Full legal name" />
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Owner Contact</label>
-                                                    <input name="o_mobile" value={formData.o_mobile} onChange={handleInputChange} placeholder="Primary phone number" />
+                                                    <input name="o_mobile" value={formData.o_mobile} onChange={handleChange} placeholder="Primary phone number" />
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Assigned Driver Name</label>
-                                                    <input name="d_name" value={formData.d_name} onChange={handleInputChange} placeholder="Driver name" />
+                                                    <input name="d_name" value={formData.d_name} onChange={handleChange} placeholder="Driver name" />
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Driver Contact</label>
-                                                    <input name="d_mobile" value={formData.d_mobile} onChange={handleInputChange} placeholder="Driver phone number" />
+                                                    <input name="d_mobile" value={formData.d_mobile} onChange={handleChange} placeholder="Driver phone number" />
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Partner Type</label>
-                                                    <select name="v_own" value={formData.v_own} onChange={handleInputChange}>
+                                                    <select name="v_own" value={formData.v_own} onChange={handleChange}>
                                                         <option value="1">Third-Party Outsource (Attached)</option>
                                                         <option value="0">Franchise (Admin)</option>
                                                     </select>
                                                 </div>
                                                 <div className="form-field" style={{ margin: 0 }}>
                                                     <label>Advance Deposit / Security (₹)</label>
-                                                    <input name="adv_amt" type="number" value={formData.adv_amt} onChange={handleInputChange} placeholder="0.00" />
+                                                    <input name="adv_amt" type="number" value={formData.adv_amt} onChange={handleChange} placeholder="0.00" />
                                                 </div>
                                             </div>
                                         </div>
@@ -250,3 +250,4 @@ const handleChange = (e) => {
 };
 
 export default AttachedVehicles;
+

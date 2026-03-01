@@ -22,7 +22,7 @@ const VehicleReport = () => {
     const fetchVehicles = async () => {
         try {
             const response = await api.get('/reports.php?type=vehicles_list');
-            setVehicles(response.data);
+            setVehicles(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error("Error fetching vehicle list", error);
         }
@@ -32,7 +32,7 @@ const VehicleReport = () => {
         setLoading(true);
         try {
             const response = await api.get(`/reports.php?type=vehicle&v_id=${encodeURIComponent(selectedVehicle)}&from_date=${fromDate}&to_date=${toDate}`);
-            setReportData(response.data);
+            setReportData(Array.isArray(response.data) ? response.data : []);
             calculateTotals(response.data);
         } catch (error) {
             console.error("Error fetching vehicle report", error);

@@ -46,7 +46,7 @@ const RefusalReport = () => {
         try {
             const response = await api.get(`/refusal_report.php?v_id=${filters.v_id}&from_date=${filters.from_date}&to_date=${filters.to_date}`);
             if (Array.isArray(response.data)) {
-                setReportData(response.data);
+                setReportData(Array.isArray(response.data) ? response.data : []);
             } else {
                 setReportData([]);
             }
@@ -189,3 +189,4 @@ const RefusalReport = () => {
 };
 
 export default RefusalReport;
+

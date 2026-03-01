@@ -76,7 +76,7 @@ const handleChange = (e) => {
                 type="text"
                 name={name}
                 value={tariffData[name] || ''}
-                onChange={handleInputChange}
+                onChange={handleChange}
                 style={{
                     height: 40, padding: '0 12px', border: '1px solid #cbd5e1', borderRadius: 6,
                     fontSize: 14, fontWeight: 700, color: '#0f172a', width: '100%',

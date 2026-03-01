@@ -17,7 +17,7 @@ const CustomerReport = () => {
     const fetchCustomers = async () => {
         try {
             const response = await api.get('/reports.php?type=customers_list');
-            setCustomers(response.data);
+            setCustomers(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error("Error fetching customers list", error);
         }
@@ -27,7 +27,7 @@ const CustomerReport = () => {
         setLoading(true);
         try {
             const response = await api.get(`/reports.php?type=customer&customer=${encodeURIComponent(selectedCustomer)}`);
-            setReportData(response.data);
+            setReportData(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error("Error fetching customer report", error);
         } finally {

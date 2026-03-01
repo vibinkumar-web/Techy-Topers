@@ -16,7 +16,7 @@ const DisplayBookings = () => {
         try {
             const response = await api.get('/bookings.php');
             if (Array.isArray(response.data)) {
-                setBookings(response.data);
+                setBookings(Array.isArray(response.data) ? response.data : []);
             } else {
                 setBookings([]);
             }
@@ -130,3 +130,4 @@ const DisplayBookings = () => {
 };
 
 export default DisplayBookings;
+

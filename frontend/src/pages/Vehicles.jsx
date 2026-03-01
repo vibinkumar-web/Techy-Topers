@@ -185,15 +185,15 @@ const openModal = (vehicle = null) => {
                                         <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Vehicle ID <span style={{ color: '#c5111a' }}>*</span></label>
-                                                <input type="text" name="v_id" value={formData.v_id} onChange={handleInputChange} required readOnly={!!currentVehicle} style={{ background: currentVehicle ? '#f8fafc' : '#fff' }} />
+                                                <input type="text" name="v_id" value={formData.v_id} onChange={handleChange} required readOnly={!!currentVehicle} style={{ background: currentVehicle ? '#f8fafc' : '#fff' }} />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Registration Number <span style={{ color: '#c5111a' }}>*</span></label>
-                                                <input type="text" name="v_no" value={formData.v_no} onChange={handleInputChange} required placeholder="KA-00-XX-0000" />
+                                                <input type="text" name="v_no" value={formData.v_no} onChange={handleChange} required placeholder="KA-00-XX-0000" />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Category <span style={{ color: '#c5111a' }}>*</span></label>
-                                                <select name="v_cat" value={formData.v_cat} onChange={handleInputChange} required>
+                                                <select name="v_cat" value={formData.v_cat} onChange={handleChange} required>
                                                     <option value="">Select Category</option>
                                                     <option value="Mini">Mini</option>
                                                     <option value="Sedan">Sedan</option>
@@ -204,11 +204,11 @@ const openModal = (vehicle = null) => {
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Passenger Capacity</label>
-                                                <input type="text" name="seat_a" value={formData.seat_a} onChange={handleInputChange} placeholder="E.g. 4+1" />
+                                                <input type="text" name="seat_a" value={formData.seat_a} onChange={handleChange} placeholder="E.g. 4+1" />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Brand</label>
-                                                <select name="v_brand" value={formData.v_brand} onChange={handleInputChange}>
+                                                <select name="v_brand" value={formData.v_brand} onChange={handleChange}>
                                                     <option value="">Select Brand</option>
                                                     <option value="Honda">Honda</option>
                                                     <option value="Toyota">Toyota</option>
@@ -220,15 +220,15 @@ const openModal = (vehicle = null) => {
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Model</label>
-                                                <input type="text" name="v_model" value={formData.v_model} onChange={handleInputChange} placeholder="E.g. Innova Crysta" />
+                                                <input type="text" name="v_model" value={formData.v_model} onChange={handleChange} placeholder="E.g. Innova Crysta" />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Year of Manufacture</label>
-                                                <input type="text" name="y_model" value={formData.y_model} onChange={handleInputChange} placeholder="YYYY" />
+                                                <input type="text" name="y_model" value={formData.y_model} onChange={handleChange} placeholder="YYYY" />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Base Location (Vacant Place)</label>
-                                                <input type="text" name="vacant_place" value={formData.vacant_place} onChange={handleInputChange} placeholder="E.g. City Center" />
+                                                <input type="text" name="vacant_place" value={formData.vacant_place} onChange={handleChange} placeholder="E.g. City Center" />
                                             </div>
                                         </div>
                                     </div>
@@ -241,27 +241,27 @@ const openModal = (vehicle = null) => {
                                         <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', background: '#fdf6e8', padding: 16, borderRadius: 8, border: '1px solid #e8d4aa' }}>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Joining / Attach Date</label>
-                                                <input type="date" name="joining" value={formData.joining} onChange={handleInputChange} />
+                                                <input type="date" name="joining" value={formData.joining} onChange={handleChange} />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Insurance Expiry</label>
-                                                <input type="date" name="ie_date" value={formData.ie_date} onChange={handleInputChange} />
+                                                <input type="date" name="ie_date" value={formData.ie_date} onChange={handleChange} />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Fitness (FC) Expiry</label>
-                                                <input type="date" name="fc_date" value={formData.fc_date} onChange={handleInputChange} />
+                                                <input type="date" name="fc_date" value={formData.fc_date} onChange={handleChange} />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Permit Expiry</label>
-                                                <input type="date" name="pe_date" value={formData.pe_date} onChange={handleInputChange} />
+                                                <input type="date" name="pe_date" value={formData.pe_date} onChange={handleChange} />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Pollution (PUC) Expiry</label>
-                                                <input type="date" name="puc_date" value={formData.puc_date} onChange={handleInputChange} />
+                                                <input type="date" name="puc_date" value={formData.puc_date} onChange={handleChange} />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Road Tax Expiry</label>
-                                                <input type="date" name="rt_date" value={formData.rt_date} onChange={handleInputChange} />
+                                                <input type="date" name="rt_date" value={formData.rt_date} onChange={handleChange} />
                                             </div>
                                         </div>
                                     </div>
@@ -274,26 +274,26 @@ const openModal = (vehicle = null) => {
                                         <div className="form-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Ownership Type</label>
-                                                <select name="v_own" value={formData.v_own} onChange={handleInputChange}>
+                                                <select name="v_own" value={formData.v_own} onChange={handleChange}>
                                                     <option value="1">Attached (Vendor/Partner)</option>
                                                     <option value="0">Company Owned</option>
                                                 </select>
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Primary Driver Name</label>
-                                                <input type="text" name="d_name" value={formData.d_name} onChange={handleInputChange} />
+                                                <input type="text" name="d_name" value={formData.d_name} onChange={handleChange} />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Driver Contact</label>
-                                                <input type="text" name="d_mobile" value={formData.d_mobile} onChange={handleInputChange} />
+                                                <input type="text" name="d_mobile" value={formData.d_mobile} onChange={handleChange} />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Owner Name</label>
-                                                <input type="text" name="o_name" value={formData.o_name} onChange={handleInputChange} />
+                                                <input type="text" name="o_name" value={formData.o_name} onChange={handleChange} />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Owner Contact</label>
-                                                <input type="text" name="o_mobile" value={formData.o_mobile} onChange={handleInputChange} />
+                                                <input type="text" name="o_mobile" value={formData.o_mobile} onChange={handleChange} />
                                             </div>
                                         </div>
                                     </div>

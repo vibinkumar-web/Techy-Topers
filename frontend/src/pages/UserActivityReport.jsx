@@ -20,7 +20,7 @@ const UserActivityReport = () => {
             try {
                 const response = await api.get('/staff.php');
                 if (Array.isArray(response.data)) {
-                    setStaff(response.data);
+                    setStaff(Array.isArray(response.data) ? response.data : []);
                 }
             } catch (error) {
                 console.error("Error fetching staff", error);
@@ -39,7 +39,7 @@ const UserActivityReport = () => {
         setSearched(true);
         try {
             const response = await api.get(`/user_activity_report.php?user_id=${filters.user_id}&from_date=${filters.from_date}&to_date=${filters.to_date}`);
-            setStats(response.data);
+            setStats(response.data && typeof response.data === 'object' ? response.data : {});
         } catch (error) {
             console.error("Error fetching stats", error);
         } finally {
@@ -189,3 +189,5 @@ const UserActivityReport = () => {
 };
 
 export default UserActivityReport;
+
+

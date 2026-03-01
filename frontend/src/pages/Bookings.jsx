@@ -69,7 +69,7 @@ const Bookings = () => {
         try {
             const response = await api.get('/bookings.php');
             if (Array.isArray(response.data)) {
-                setBookings(response.data);
+                setBookings(Array.isArray(response.data) ? response.data : []);
             } else {
                 setBookings([]);
             }
@@ -99,7 +99,7 @@ const Bookings = () => {
                 try {
                     const response = await api.get(`/customer_search.php?search=${value}`);
                     if (Array.isArray(response.data) && response.data.length > 0) {
-                        setSuggestions(response.data);
+                        setSuggestions(Array.isArray(response.data) ? response.data : []);
                         setShowSuggestions(true);
                     } else {
                         setSuggestions([]);
@@ -175,7 +175,7 @@ const Bookings = () => {
                 try {
                     const response = await api.get(`/enquery_tariff.php?km=${km}`);
                     if (Array.isArray(response.data) && response.data.length > 0) {
-                        setTariffData(response.data);
+                        setTariffData(response.data || {});
                         setShowTariff(true);
                     } else {
                         setTariffData([]);
@@ -743,3 +743,6 @@ const Bookings = () => {
 };
 
 export default Bookings;
+
+
+

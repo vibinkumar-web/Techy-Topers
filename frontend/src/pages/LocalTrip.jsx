@@ -293,7 +293,7 @@ const LocalTrip = () => {
                                 </div>
                                 <div className="form-field" style={{ margin: 0 }}>
                                     <label>Closing Odometer (KM) <span style={{ color: '#c5111a' }}>*</span></label>
-                                    <input type="number" name="closing_km" value={formData.closing_km} onChange={handleInputChange} required />
+                                    <input type="number" name="closing_km" value={formData.closing_km} onChange={handleChange} required />
                                 </div>
                                 <div className="form-field" style={{ margin: 0 }}>
                                     <label>Total Billed Distance (KM)</label>
@@ -339,19 +339,19 @@ const LocalTrip = () => {
                             <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                                 <div className="form-field" style={{ margin: 0 }}>
                                     <label>Route Toll Gate Surcharge (₹)</label>
-                                    <input type="number" name="toll_gate" value={formData.toll_gate} onChange={handleInputChange} min="0" placeholder="0" />
+                                    <input type="number" name="toll_gate" value={formData.toll_gate} onChange={handleChange} min="0" placeholder="0" />
                                 </div>
                                 <div className="form-field" style={{ margin: 0 }}>
                                     <label>Driver Operator Batta (₹)</label>
-                                    <input type="number" name="driver_batta" value={formData.driver_batta} onChange={handleInputChange} min="0" placeholder="0" />
+                                    <input type="number" name="driver_batta" value={formData.driver_batta} onChange={handleChange} min="0" placeholder="0" />
                                 </div>
                                 <div className="form-field" style={{ margin: 0 }}>
                                     <label>Facility Parking Outlay (₹)</label>
-                                    <input type="number" name="parking" value={formData.parking} onChange={handleInputChange} min="0" placeholder="0" />
+                                    <input type="number" name="parking" value={formData.parking} onChange={handleChange} min="0" placeholder="0" />
                                 </div>
                                 <div className="form-field" style={{ margin: 0 }}>
                                     <label>Applied Goodwill Discount (₹)</label>
-                                    <input type="number" name="discount" value={formData.discount} onChange={handleInputChange} min="0" placeholder="0" />
+                                    <input type="number" name="discount" value={formData.discount} onChange={handleChange} min="0" placeholder="0" />
                                 </div>
                             </div>
                         </div>
@@ -385,7 +385,7 @@ const LocalTrip = () => {
                                             type="number"
                                             name="paid_amount"
                                             value={formData.paid_amount}
-                                            onChange={handleInputChange}
+                                            onChange={handleChange}
                                             required
                                             style={{ fontSize: 18, fontWeight: 800, color: '#023149', borderColor: '#023149', paddingLeft: 40, height: 48 }}
                                             min="0"

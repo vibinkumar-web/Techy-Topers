@@ -22,7 +22,7 @@ const CompanyReport = () => {
     const fetchCompanies = async () => {
         try {
             const response = await api.get('/reports.php?type=company_list');
-            setCompanies(response.data);
+            setCompanies(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error("Error fetching company list", error);
         }
@@ -32,7 +32,7 @@ const CompanyReport = () => {
         setLoading(true);
         try {
             const response = await api.get(`/reports.php?type=company&company=${encodeURIComponent(selectedCompany)}&from_date=${fromDate}&to_date=${toDate}`);
-            setReportData(response.data);
+            setReportData(Array.isArray(response.data) ? response.data : []);
             calculateTotals(response.data);
         } catch (error) {
             console.error("Error fetching company report", error);

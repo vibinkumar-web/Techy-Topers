@@ -113,11 +113,11 @@ const handleChange = (e) => {
                                         <div className="form-grid" style={{ gridTemplateColumns: '1fr' }}>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Customer Name <span style={{ color: '#c5111a' }}>*</span></label>
-                                                <input type="text" name="cus_name" value={formData.cus_name || ''} onChange={handleInputChange} required />
+                                                <input type="text" name="cus_name" value={formData.cus_name || ''} onChange={handleChange} required />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Mobile Number <span style={{ color: '#c5111a' }}>*</span></label>
-                                                <input type="text" name="cus_mobile" value={formData.cus_mobile || ''} onChange={handleInputChange} required />
+                                                <input type="text" name="cus_mobile" value={formData.cus_mobile || ''} onChange={handleChange} required />
                                             </div>
                                         </div>
                                     </div>
@@ -128,22 +128,22 @@ const handleChange = (e) => {
                                         <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Pickup Time <span style={{ color: '#c5111a' }}>*</span></label>
-                                                <input type="datetime-local" name="pickup_time" value={formData.pickup_time || ''} onChange={handleInputChange} required />
+                                                <input type="datetime-local" name="pickup_time" value={formData.pickup_time || ''} onChange={handleChange} required />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Booking Classification</label>
-                                                <select name="b_type" value={formData.b_type || ''} onChange={handleInputChange}>
+                                                <select name="b_type" value={formData.b_type || ''} onChange={handleChange}>
                                                     <option value="0">Current Request</option>
                                                     <option value="1">Advance Booking</option>
                                                 </select>
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Pickup Point <span style={{ color: '#c5111a' }}>*</span></label>
-                                                <input type="text" name="pickup" value={formData.pickup || ''} onChange={handleInputChange} required />
+                                                <input type="text" name="pickup" value={formData.pickup || ''} onChange={handleChange} required />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Destination Drop <span style={{ color: '#c5111a' }}>*</span></label>
-                                                <input type="text" name="drop_place" value={formData.drop_place || ''} onChange={handleInputChange} required />
+                                                <input type="text" name="drop_place" value={formData.drop_place || ''} onChange={handleChange} required />
                                             </div>
                                         </div>
                                     </div>
@@ -154,18 +154,18 @@ const handleChange = (e) => {
                                         <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>Requested Vehicle / Class</label>
-                                                <input type="text" name="v_types" value={formData.v_types || ''} onChange={handleInputChange} placeholder="e.g. Sedan, Innova" />
+                                                <input type="text" name="v_types" value={formData.v_types || ''} onChange={handleChange} placeholder="e.g. Sedan, Innova" />
                                             </div>
                                             <div className="form-field" style={{ margin: 0 }}>
                                                 <label>A/C Preference</label>
-                                                <select name="ac_type" value={formData.ac_type || ''} onChange={handleInputChange}>
+                                                <select name="ac_type" value={formData.ac_type || ''} onChange={handleChange}>
                                                     <option value="AC">Air Conditioned (A/C)</option>
                                                     <option value="Non AC">Non A/C</option>
                                                 </select>
                                             </div>
                                             <div className="form-field" style={{ margin: 0, gridColumn: 'span 2' }}>
                                                 <label>Special Remarks / Internal Notes</label>
-                                                <input type="text" name="remarks" value={formData.remarks || ''} onChange={handleInputChange} placeholder="Any specific requirements..." />
+                                                <input type="text" name="remarks" value={formData.remarks || ''} onChange={handleChange} placeholder="Any specific requirements..." />
                                             </div>
                                         </div>
                                     </div>
