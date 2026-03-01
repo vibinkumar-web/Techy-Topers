@@ -1,8 +1,7 @@
 <?php
 session_start();
-header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, PUT");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
@@ -137,6 +136,24 @@ try {
         } else {
             throw new Exception("Unable to update vehicle.");
         }
+    } elseif ($method === 'DELETE') {
+        $v_id = isset($_GET['v_id']) ? $_GET['v_id'] : '';
+        if (!$v_id) {
+            http_response_code(400);
+            echo json_encode(array("message" => "Missing vehicle ID."));
+            exit;
+        }
+
+        $query = "DELETE FROM f_v_attach WHERE v_id = :v_id";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(":v_id", $v_id);
+        
+        if ($stmt->execute()) {
+            http_response_code(200);
+            echo json_encode(array("message" => "Vehicle deleted successfully."));
+        } else {
+            throw new Exception("Unable to delete vehicle.");
+        }
     }
 
 } catch (PDOException $e) {
@@ -147,3 +164,4 @@ try {
     echo json_encode(array("message" => "General error: " . $e->getMessage()));
 }
 ?>
+

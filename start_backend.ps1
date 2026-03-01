@@ -22,5 +22,5 @@ if (-not $php) {
     exit 1
 }
 
-Write-Host "Starting PHP server at http://localhost:8000 using $php" -ForegroundColor Green
-& $php -S localhost:8000 -t .
+Write-Host "Starting PHP server at http://localhost:8080 using $php" -ForegroundColor Green
+& $php -S localhost:8080 -t .

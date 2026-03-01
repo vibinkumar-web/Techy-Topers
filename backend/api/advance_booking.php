@@ -1,5 +1,7 @@
 <?php
-include 'db.php';
+include '../config/db.php';
+$database = new Database();
+$pdo = $database->getConnection();
 
 header("Content-Type: application/json");
 

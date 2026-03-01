@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
@@ -7,16 +7,12 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Configure Axios base URL
-    // Adjust port if your PHP server runs on a different port. 
-    // For development, assuming PHP server on port 8000
-    const api = axios.create({
-        baseURL: 'http://localhost:8000/backend/api',
+    // Stable axios instance — created once, not on every render
+    const api = useMemo(() => axios.create({
+        baseURL: 'http://localhost:8080/backend/api',
         withCredentials: true,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
+        headers: { 'Content-Type': 'application/json' },
+    }), []);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
@@ -62,7 +58,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading, api }}>
+        <AuthContext.Provider value={{ user, setUser, login, register, logout, loading, api }}>
             {!loading && children}
         </AuthContext.Provider>
     );

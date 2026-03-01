@@ -1,5 +1,7 @@
 <?php
-include 'db.php';
+include '../config/db.php';
+$database = new Database();
+$pdo = $database->getConnection();
 
 header("Content-Type: application/json");
 
@@ -31,7 +33,7 @@ switch ($method) {
         }
         else {
              // List all OnTrip vehicles for selection
-            $sql = "SELECT v_id FROM f_ontrip WHERE already_assign = '1'";
+            $sql = "SELECT * FROM f_ontrip WHERE already_assign = '1' ORDER BY assign_time DESC";
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -70,6 +72,11 @@ switch ($method) {
             $sqlOnTrip = "UPDATE f_ontrip SET already_assign='0' WHERE b_id=?";
             $stmtOnTrip = $pdo->prepare($sqlOnTrip);
             $stmtOnTrip->execute([$b_id]);
+
+            // Update f_ft_booking (Mark as completed)
+            $sqlFBooking = "UPDATE f_ft_booking SET booking_status='1' WHERE b_id=?";
+            $stmtFBooking = $pdo->prepare($sqlFBooking);
+            $stmtFBooking->execute([$b_id]);
 
              // Update Refused (Legacy logic included this)
             $sqlRefused = "UPDATE f_refused SET miss_amount=? WHERE b_id=?";

@@ -1,7 +1,13 @@
 import { useState, useEffect, useContext } from 'react';
-import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
+
+
+
+
+import AuthContext from '../context/AuthContext';
 const Assignments = () => {
+    const toast = useToast();
     const { api } = useContext(AuthContext);
     const [pendingBookings, setPendingBookings] = useState([]);
     const [vehicles, setVehicles] = useState([]);
@@ -54,6 +60,11 @@ const Assignments = () => {
     const handleAssign = async () => {
         if (!selectedVehicleId) return;
 
+        if (!vehicles.some(v => v.v_id === selectedVehicleId)) {
+            toast("Please select a valid Vehicle ID from the dropdown suggestions.");
+            return;
+        }
+
         try {
             await api.post('/assign.php', {
                 b_id: selectedBooking.b_id,
@@ -62,88 +73,192 @@ const Assignments = () => {
 
             // Refresh data
             const bookingsRes = await api.get('/assign.php');
-            setPendingBookings(bookingsRes.data);
+            setPendingBookings(Array.isArray(bookingsRes.data) ? bookingsRes.data : []);
             closeModal();
+            toast('Vehicle Dispatched Successfully! Check the Trip Closing page when the trip is finished.');
         } catch (error) {
             console.error("Error assigning vehicle", error);
+            toast('Failed to assign driver.', 'error');
         }
     };
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return (
+        <div className="page-wrap">
+            <div className="page-body" style={{ padding: 40, textAlign: 'center', color: '#023149', fontWeight: 600 }}>
+                Loading dispatch assignments...
+            </div>
+        </div>
+    );
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Pending Assignments</h1>
+        <div className="page-wrap">
+            <div className="page-header">
+                <div>
+                    <div>
+                        <h1>Dispatch Assignments</h1>
+                        <p>Assign specific fleet vehicles and active drivers to confirmed bookings</p>
+                    </div>
+                </div>
+            </div>
 
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">B-ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Req. Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {Array.isArray(pendingBookings) && pendingBookings.map((booking) => (
-                            <tr key={booking.b_id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.b_id}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.pickup}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.b_name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.p_city} to {booking.d_place}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.v_type} {booking.ac_type === '1' ? 'AC' : 'Non-AC'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button onClick={() => openAssignModal(booking)} className="text-indigo-600 hover:text-indigo-900 font-bold bg-indigo-100 px-3 py-1 rounded">Assign</button>
-                                </td>
-                            </tr>
-                        ))}
-                        {pendingBookings.length === 0 && (
+            <div className="page-body">
+                <div className="table-wrap">
+                    <table>
+                        <thead>
                             <tr>
-                                <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">No pending assignments.</td>
+                                <th>Booking Ref</th>
+                                <th>Status</th>
+                                <th>Schedule</th>
+                                <th>Client Name</th>
+                                <th>Origin</th>
+                                <th>Destination</th>
+                                <th>Service Class</th>
+                                <th style={{ textAlign: 'center' }}>A/C</th>
+                                <th>Spec. Req</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {pendingBookings.map((booking) => (
+                                <tr key={booking.b_id}>
+                                    <td style={{ fontWeight: 800, color: '#023149', fontFamily: 'monospace', fontSize: 13 }}>#{booking.b_id}</td>
+                                    <td>
+                                        <span className={`badge ${booking.booking_status === '1' ? 'badge-green' : 'badge-amber'}`}>
+                                            {booking.booking_status === '1' ? 'Confirmed' : 'Pending'}
+                                        </span>
+                                    </td>
+                                    <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 700, color: '#023149' }} title={booking.pickup}>{booking.pickup}</td>
+                                    <td>
+                                        <div style={{ fontWeight: 600, color: '#023149', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.b_name || booking.to_whom}>{booking.b_name || booking.to_whom}</div>
+                                        <div style={{ fontSize: 12, color: '#6b7280' }}>{booking.m_no}</div>
+                                    </td>
+                                    <td style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.p_city}>{booking.p_city}</td>
+                                    <td style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.d_place}>{booking.d_place}</td>
+                                    <td>
+                                        <span className="badge badge-blue">{booking.v_type}</span>
+                                        <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>{booking.t_type}</div>
+                                    </td>
+                                    <td style={{ textAlign: 'center' }}>
+                                        {booking.ac_type === '1' ? (
+                                            <span className="material-icons" style={{ fontSize: 18, color: '#023149' }} title="AC Required">ac_unit</span>
+                                        ) : (
+                                            <span className="material-icons" style={{ fontSize: 18, color: '#cbd5e1' }} title="Non-AC">remove_circle_outline</span>
+                                        )}
+                                    </td>
+                                    <td style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#6b7280', fontStyle: 'italic' }} title={booking.remarks}>{booking.remarks || '-'}</td>
+                                    <td style={{ textAlign: 'right' }}>
+                                        <button
+                                            className="btn-ghost"
+                                            onClick={() => openAssignModal(booking)}
+                                            style={{ padding: '6px 16px', color: '#c5111a', borderColor: '#fecaca', background: '#fef2f2' }}
+                                        >
+                                            <span className="material-icons" style={{ fontSize: 16 }}>local_taxi</span>
+                                            Dispatch
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {(!pendingBookings || pendingBookings.length === 0) && (
+                                <tr>
+                                    <td colSpan="10" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>done_all</span>
+                                            <div>All active bookings have been successfully dispatched.</div>
+                                            <div style={{ fontSize: 13, marginTop: 4 }}>No pending assignments found in the queue.</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {isModalOpen && selectedBooking && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center">
-                    <div className="bg-white p-5 rounded-lg shadow-xl w-full max-w-lg">
-                        <h2 className="text-xl font-bold mb-4">Assign Vehicle to Booking #{selectedBooking.b_id}</h2>
-
-                        <div className="mb-4">
-                            <p className="text-sm text-gray-600"><strong>Customer:</strong> {selectedBooking.b_name}</p>
-                            <p className="text-sm text-gray-600"><strong>Route:</strong> {selectedBooking.p_city} to {selectedBooking.d_place}</p>
-                            <p className="text-sm text-gray-600"><strong>Required:</strong> {selectedBooking.v_type}</p>
+                <div className="modal-overlay">
+                    <div className="modal" style={{ maxWidth: 540 }}>
+                        <div className="modal-header">
+                            <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span className="material-icons" style={{ color: '#c5111a' }}>assignment_ind</span>
+                                Dispatch Assignment — #{selectedBooking.b_id}
+                            </h2>
+                            <button onClick={closeModal}>
+                                <span className="material-icons">close</span>
+                            </button>
                         </div>
 
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Select Vehicle</label>
-                            <select
-                                value={selectedVehicleId}
-                                onChange={(e) => setSelectedVehicleId(e.target.value)}
-                                className="block w-full rounded-md border-gray-300 shadow-sm border p-2"
-                            >
-                                <option value="">-- Choose Vehicle --</option>
-                                {Array.isArray(vehicles) && vehicles.map(v => (
-                                    <option key={v.v_id} value={v.v_id}>
-                                        {v.v_no} - {v.v_brand} {v.v_model} ({v.d_name})
-                                    </option>
-                                ))}
-                            </select>
+                        <div className="modal-body" style={{ padding: 32 }}>
+                            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 20, marginBottom: 24 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, borderBottom: '1px dashed #cbd5e1', paddingBottom: 16 }}>
+                                    <div>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 4 }}>Customer Profile</div>
+                                        <div style={{ fontSize: 15, fontWeight: 800, color: '#023149' }}>{selectedBooking.b_name || selectedBooking.to_whom}</div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 4 }}>Schedule</div>
+                                        <div style={{ fontSize: 14, fontWeight: 700, color: '#023149' }}>{selectedBooking.pickup}</div>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                    <div>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 4 }}>Required Route</div>
+                                        <div style={{ fontSize: 14, fontWeight: 600, color: '#475569' }}>{selectedBooking.p_city} &rarr; {selectedBooking.d_place}</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: 11, fontWeight: 700, color: '#c5111a', textTransform: 'uppercase', marginBottom: 4 }}>Vehicle Class Required</div>
+                                        <div style={{ fontSize: 14, fontWeight: 800, color: '#023149' }}>{selectedBooking.v_type} {selectedBooking.ac_type === '1' ? '(A/C)' : ''}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form id="assignForm" onSubmit={e => { e.preventDefault(); handleAssign(); }}>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label>Search and Select Fleet Vehicle <span style={{ color: '#c5111a' }}>*</span></label>
+                                    <input
+                                        type="text"
+                                        list="vehiclesList"
+                                        value={selectedVehicleId}
+                                        onChange={(e) => setSelectedVehicleId(e.target.value)}
+                                        placeholder="Type Vehicle ID to search..."
+                                        required
+                                        style={{ height: 44, borderColor: selectedVehicleId ? '#023149' : '#cbd5e1' }}
+                                    />
+                                    <datalist id="vehiclesList">
+                                        {vehicles.map(v => (
+                                            <option key={v.v_id} value={v.v_id}>
+                                                [ {v.v_no} ] — {v.v_brand} {v.v_model} — Driver: {v.d_name || 'Unassigned'}
+                                            </option>
+                                        ))}
+                                    </datalist>
+                                    {selectedVehicleId && !vehicles.some(v => v.v_id === selectedVehicleId) && (
+                                        <div style={{ fontSize: 12, color: '#c5111a', marginTop: 4, fontWeight: 600 }}>
+                                            <span className="material-icons" style={{ fontSize: 14, verticalAlign: 'middle', marginRight: 4 }}>warning</span>
+                                            Please select a valid Vehicle ID from the list.
+                                        </div>
+                                    )}
+                                </div>
+                            </form>
                         </div>
 
-                        <div className="flex justify-end space-x-3 mt-6">
-                            <button onClick={closeModal} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">Cancel</button>
+                        <div className="modal-footer" style={{ padding: '16px 32px' }}>
+                            <button type="button" className="btn-ghost" onClick={closeModal}>Abort</button>
                             <button
-                                onClick={handleAssign}
+                                type="submit"
+                                form="assignForm"
+                                className="btn-primary"
                                 disabled={!selectedVehicleId}
-                                className={`px-4 py-2 rounded-md text-white ${!selectedVehicleId ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                                style={{
+                                    background: '#c5111a',
+                                    height: 42,
+                                    padding: '0 32px',
+                                    opacity: !selectedVehicleId ? 0.6 : 1,
+                                    cursor: !selectedVehicleId ? 'not-allowed' : 'pointer'
+                                }}
+                                onMouseEnter={e => { if (selectedVehicleId) e.currentTarget.style.background = '#7d0907'; }}
+                                onMouseLeave={e => { if (selectedVehicleId) e.currentTarget.style.background = '#c5111a'; }}
                             >
-                                Confirm Assignment
+                                <span className="material-icons" style={{ fontSize: 18 }}>gavel</span>
+                                Exec Dispatch
                             </button>
                         </div>
                     </div>

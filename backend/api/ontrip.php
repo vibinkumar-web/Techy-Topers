@@ -1,14 +1,10 @@
 <?php
-header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+
 
 include_once '../config/db.php';
 
@@ -61,11 +57,12 @@ if ($method === 'GET') {
         $row_check = $stmt_check->fetch(PDO::FETCH_ASSOC);
         $last_closing_km = $row_check['max_km'] ? $row_check['max_km'] : 0;
         
-        if ($opening_km < $last_closing_km) {
-             http_response_code(400);
-             echo json_encode(array("message" => "Opening KM cannot be less than last Closing KM ($last_closing_km)."));
-             exit;
-        }
+        // Validation disabled to allow manual overrides for mismatched odometer readouts as requested by user.
+        // if ($last_closing_km > 0 && $opening_km < $last_closing_km) {
+        //      http_response_code(400);
+        //      echo json_encode(array("message" => "Opening KM cannot be less than last Closing KM ($last_closing_km)."));
+        //      exit;
+        // }
         
         date_default_timezone_set("Asia/Calcutta");  
         $current_time = date("Y-m-d H:i");
@@ -78,7 +75,11 @@ if ($method === 'GET') {
         // This likely tracks the 'gap' or dead mileage if any, but usually Opening == Last Closing.
         // If Opening > Last Closing, there is a gap. 
         // If I strictly follow legacy:
-        $new_opening = $last_closing_km - $opening_km;
+        if ($opening_km < $last_closing_km) {
+             $new_opening = 0; // Negative distance is invalid, so gap is 0
+        } else {
+             $new_opening = $opening_km - $last_closing_km; // Corrected math: diff is Current (Opening) - Previous (Closing)
+        }
 
         $query = "UPDATE f_ontrip SET open_km = :opening_km, new_opening = :new_opening, bookin_time = :bookin_time WHERE already_assign = '1' AND v_id = :v_id";
         $stmt = $db->prepare($query);
@@ -99,3 +100,5 @@ if ($method === 'GET') {
     }
 }
 ?>
+
+

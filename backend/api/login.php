@@ -43,7 +43,6 @@ try {
             ));
         } else {
             // 2. Check ft_register (New/App Registration - Name, Email, or Mobile)
-            // Added 'mobile' back since column is now created.
             $query = "SELECT * FROM ft_register WHERE (name = :username OR email = :username OR mobile = :username) AND pwd = :password";
             $stmt = $conn->prepare($query);
             $stmt->bindParam(':username', $username);

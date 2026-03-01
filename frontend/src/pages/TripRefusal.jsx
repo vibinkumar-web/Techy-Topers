@@ -1,8 +1,14 @@
 import { useState, useContext } from 'react';
-import AuthContext from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+
+
+
+
 
 const TripRefusal = () => {
+    const toast = useToast();
     const { api, user } = useContext(AuthContext);
     const navigate = useNavigate();
     const [bookingId, setBookingId] = useState('');
@@ -20,60 +26,102 @@ const TripRefusal = () => {
                 reason: reason,
                 user_id: user.emp_id
             });
-            alert('Trip Refused Successfully. Vehicle is now free.');
-            navigate('/assignments'); // Redirect to assignments to re-assign?
+            toast('Trip Refused Successfully. Vehicle is now free.');
+            navigate('/assignments'); // Redirect to assignments to re-assign
         } catch (error) {
             console.error("Error refusing trip", error);
-            alert("Failed to refuse trip.");
+            toast("Failed to refuse trip.", 'error');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
-            <h1 className="text-xl font-bold text-red-600 mb-6 text-center">Trip Refusal Form</h1>
+        <div className="page-wrap">
+            <div className="page-header">
+                <div>
+                    <div>
+                        <h1>Action: Trip Refusal</h1>
+                        <p>Document driver refusals and instantly release assigned vehicles</p>
+                    </div>
+                </div>
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Booking ID</label>
-                    <input
-                        type="text"
-                        value={bookingId}
-                        onChange={(e) => setBookingId(e.target.value)}
-                        className="mt-1 block w-full border rounded-md shadow-sm p-2"
-                        required
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Vehicle ID (Refusing)</label>
-                    <input
-                        type="text"
-                        value={vehicleId}
-                        onChange={(e) => setVehicleId(e.target.value)}
-                        className="mt-1 block w-full border rounded-md shadow-sm p-2"
-                        required
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Reason</label>
-                    <textarea
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        className="mt-1 block w-full border rounded-md shadow-sm p-2"
-                        rows="3"
-                        required
-                    ></textarea>
-                </div>
+            <div className="page-body">
+                <div style={{ maxWidth: 640 }}>
+                    <div className="section" style={{ borderTop: '3px solid #c5111a' }}>
+                        <div style={{ padding: 32 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, borderBottom: '1px solid #fef2f2', paddingBottom: 16 }}>
+                                <div style={{ background: '#fef2f2', width: 40, height: 40, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span className="material-icons" style={{ fontSize: 20, color: '#c5111a' }}>block</span>
+                                </div>
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#c5111a' }}>Refusal Documentation</h3>
+                                    <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>This action is audited and permanently recorded</p>
+                                </div>
+                            </div>
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-                >
-                    {loading ? 'Processing...' : 'Refuse Trip'}
-                </button>
-            </form>
+                            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                                <div className="form-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                                    <div className="form-field" style={{ margin: 0 }}>
+                                        <label>Associated Booking ID <span style={{ color: '#c5111a' }}>*</span></label>
+                                        <input
+                                            type="text"
+                                            value={bookingId}
+                                            onChange={(e) => setBookingId(e.target.value)}
+                                            placeholder="E.g. 10245"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-field" style={{ margin: 0 }}>
+                                        <label>Vehicle / Driver ID <span style={{ color: '#c5111a' }}>*</span></label>
+                                        <input
+                                            type="text"
+                                            value={vehicleId}
+                                            onChange={(e) => setVehicleId(e.target.value)}
+                                            placeholder="E.g. V-102"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label>Detailed Refusal Reason <span style={{ color: '#c5111a' }}>*</span></label>
+                                    <textarea
+                                        value={reason}
+                                        onChange={(e) => setReason(e.target.value)}
+                                        rows="4"
+                                        placeholder="Explain the context of the refusal (Driver no-show, vehicle breakdown, etc)..."
+                                        style={{ resize: 'vertical' }}
+                                        required
+                                    ></textarea>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 24, borderTop: '1px solid #fdf6e8', gap: 12 }}>
+                                    <button
+                                        type="button"
+                                        className="btn-ghost"
+                                        onClick={() => navigate(-1)}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="btn-primary"
+                                        style={{ height: 42, padding: '0 32px', background: '#c5111a', opacity: loading ? 0.7 : 1, cursor: loading ? 'wait' : 'pointer' }}
+                                        onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#7d0907'; }}
+                                        onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#c5111a'; }}
+                                    >
+                                        <span className="material-icons" style={{ fontSize: 18 }}>gavel</span>
+                                        {loading ? 'Processing...' : 'Confirm Refusal'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

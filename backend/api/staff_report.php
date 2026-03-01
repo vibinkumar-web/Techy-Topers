@@ -1,5 +1,4 @@
 <?php
-header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Max-Age: 3600");
@@ -47,6 +46,58 @@ if ($from_date && $to_date) {
     }
     echo json_encode($data);
 
+} elseif (isset($_GET['action']) && $_GET['action'] === 'salary_summary') {
+    $emp_id = isset($_GET['emp_id']) ? $_GET['emp_id'] : '';
+    if (!$emp_id) {
+         echo json_encode(['error' => 'Employee ID is required']);
+         exit;
+    }
+
+    $first_day = date('Y-m-01');
+    $last_day = date('Y-m-t');
+
+    // Fetch shifts for the current month
+    $query = "SELECT * FROM f_login_status 
+              WHERE id_emp = :emp_id 
+              AND logout_date_new BETWEEN :from_date AND :to_date 
+              ORDER BY login_time DESC";
+              
+    $stmt = $db->prepare($query);
+    $stmt->bindParam(":emp_id", $emp_id);
+    $stmt->bindParam(":from_date", $first_day);
+    $stmt->bindParam(":to_date", $last_day);
+    $stmt->execute();
+
+    $shifts = [];
+    $total_ms = 0;
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $duration_str = '-';
+        if ($row['logout'] && $row['logout'] !== '0000-00-00 00:00:00') {
+             $start = strtotime($row['login_time']);
+             $end = strtotime($row['logout']);
+             $diff = $end - $start;
+             if ($diff > 0) {
+                 $total_ms += $diff;
+                 $hrs = floor($diff / 3600);
+                 $mins = floor(($diff % 3600) / 60);
+                 $duration_str = "${hrs}h ${mins}m";
+             }
+        }
+        $row['duration_formatted'] = $duration_str;
+        $shifts[] = $row;
+    }
+
+    // Calculate total hours exactly
+    $total_hrs = floor($total_ms / 3600);
+    $total_mins = floor(($total_ms % 3600) / 60);
+
+    echo json_encode([
+        'total_duration' => "${total_hrs}h ${total_mins}m",
+        'total_decimal' => round($total_hrs + ($total_mins / 60), 2),
+        'shifts' => array_slice($shifts, 0, 10) // Only send 10 recent
+    ]);
+
 } elseif (isset($_GET['list'])) {
     // Get list of staff IDs present in login status
     $query = "SELECT DISTINCT id_emp FROM f_login_status WHERE v_type IS NULL ORDER BY id_emp";
@@ -57,3 +108,4 @@ if ($from_date && $to_date) {
      echo json_encode(array());
 }
 ?>
+

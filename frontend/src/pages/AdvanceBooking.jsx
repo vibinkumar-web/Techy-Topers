@@ -1,8 +1,12 @@
 import { useState, useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 
 const AdvanceBooking = () => {
+    const toast = useToast();
     const { api } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -10,10 +14,15 @@ const AdvanceBooking = () => {
         const fetchBookings = async () => {
             try {
                 const response = await api.get('/advance_booking.php');
-                setBookings(response.data);
+                if (Array.isArray(response.data)) {
+                    setBookings(Array.isArray(response.data) ? response.data : []);
+                } else {
+                    setBookings([]);
+                }
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching advance bookings", error);
+                setBookings([]);
                 setLoading(false);
             }
         };
@@ -21,52 +30,97 @@ const AdvanceBooking = () => {
         fetchBookings();
     }, [api]);
 
-    return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Advance Bookings (Future Trips)</h1>
+    if (loading) return (
+        <div className="page-wrap">
+            <div className="page-body" style={{ padding: 40, textAlign: 'center', color: '#023149', fontWeight: 600 }}>
+                Loading advance bookings...
+            </div>
+        </div>
+    );
 
-            <div className="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">B-ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drop</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {loading ? (
-                            <tr><td colSpan="9" className="text-center py-4">Loading...</td></tr>
-                        ) : bookings.length === 0 ? (
-                            <tr><td colSpan="9" className="text-center py-4">No future advance bookings found.</td></tr>
-                        ) : (
-                            bookings.map((booking) => (
-                                <tr key={booking.b_id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.b_id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.b_date}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.pickup}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.p_city}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.d_place}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.v_type}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.b_name}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.m_no}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button className="text-indigo-600 hover:text-indigo-900">Assign Later</button>
+    return (
+        <div className="page-wrap">
+            <div className="page-header">
+                <div>
+                    <div>
+                        <h1>Advance Bookings</h1>
+                        <p>View upcoming scheduled trips and pending assignments</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="page-body">
+                <div className="table-wrap">
+                    <table>
+                        <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Schedule</th>
+                                <th>Route Strategy</th>
+                                <th>Requirements</th>
+                                <th>Customer Details</th>
+                                <th>Status</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {bookings.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>event_available</span>
+                                            <div>No future advance bookings found.</div>
+                                        </div>
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : (
+                                bookings.map((booking) => (
+                                    <tr key={booking.b_id}>
+                                        <td style={{ fontWeight: 800, color: '#023149', fontFamily: 'monospace', fontSize: 13 }}>#{booking.b_id}</td>
+                                        <td>
+                                            <div style={{ fontWeight: 700, color: '#023149' }}>{booking.b_date}</div>
+                                            <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 600 }}>{booking.pickup || booking.pickup_time}</div>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, maxWidth: 220, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                                <span className="material-icons" style={{ fontSize: 14, color: '#15803d' }}>my_location</span>
+                                                <span title={booking.p_city || booking.pickup} style={{ fontWeight: 600, color: '#475569' }}>{booking.p_city || booking.pickup}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, maxWidth: 220, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', marginTop: 4 }}>
+                                                <span className="material-icons" style={{ fontSize: 14, color: '#c5111a' }}>location_on</span>
+                                                <span title={booking.d_place} style={{ fontWeight: 600, color: '#023149' }}>{booking.d_place}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className="badge badge-blue">{booking.v_type || booking.v_types}</span>
+                                        </td>
+                                        <td>
+                                            <div style={{ fontWeight: 700, color: '#023149', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.b_name || booking.cus_name}>{booking.b_name || booking.cus_name}</div>
+                                            <div style={{ color: '#6b7280', fontSize: 12 }}>{booking.m_no || booking.cus_mobile}</div>
+                                        </td>
+                                        <td>
+                                            <span className="badge badge-yellow">Pending Assignment</span>
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button
+                                                className="btn-ghost"
+                                                style={{ padding: '6px 16px', color: '#15803d', borderColor: '#bbf7d0', background: '#f0fdf4' }}
+                                                onClick={() => navigate('/assign-later', { state: { booking } })}
+                                            >
+                                                <span className="material-icons" style={{ fontSize: 16 }}>assignment_ind</span>
+                                                Assign Vehicle
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
 };
 
 export default AdvanceBooking;
+

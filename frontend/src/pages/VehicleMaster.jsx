@@ -1,8 +1,14 @@
 import { useState, useEffect, useContext } from 'react';
-import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
+        
+
+        
+
+import AuthContext from '../context/AuthContext';
 const VehicleMaster = () => {
-    const { api } = useContext(AuthContext);
+    const toast = useToast();
+const { api } = useContext(AuthContext);
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -41,7 +47,7 @@ const VehicleMaster = () => {
     const fetchVehicles = async () => {
         try {
             const response = await api.get('/vehicles.php');
-            setVehicles(response.data);
+            setVehicles(Array.isArray(response.data) ? response.data : []);
             setLoading(false);
         } catch (error) {
             console.error("Error fetching vehicles", error);
@@ -49,18 +55,24 @@ const VehicleMaster = () => {
         }
     };
 
-    const handleInputChange = (e) => {
+    
+        
+const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
-    const openNewModal = () => {
+    
+        
+const handleAdd = () => {
         setFormData(initialFormState);
         setIsEdit(false);
         setShowModal(true);
     };
 
-    const openEditModal = (vehicle) => {
+    
+        
+const handleEdit = (vehicle) => {
         setFormData(vehicle);
         setIsEdit(true);
         setShowModal(true);
@@ -71,233 +83,252 @@ const VehicleMaster = () => {
         try {
             if (isEdit) {
                 await api.put('/vehicles.php', formData);
-                alert('Vehicle updated successfully');
+                toast('Vehicle updated successfully');
             } else {
                 await api.post('/vehicles.php', formData);
-                alert('Vehicle attached successfully');
+                toast('Vehicle attached successfully');
             }
             setShowModal(false);
             fetchVehicles();
         } catch (error) {
             console.error("Error saving vehicle", error);
-            alert('Failed to save operation. ' + (error.response?.data?.message || ''));
+            toast('Failed to save operation. ' + (error.response?.data?.message || '', 'error'));
         }
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Vehicle Master</h1>
-                <button
-                    onClick={openNewModal}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center"
-                >
-                    <span className="mr-2">+</span> Add Vehicle
-                </button>
+        <div className="page-wrap">
+            {/* ── Page Header ── */}
+            <div className="page-header">
+                <div>
+                    <div>
+                        <h1>Vehicle Master</h1>
+                        <p>Fleet registry and compliance tracking</p>
+                    </div>
+                    <button
+                        className="btn-primary"
+                        onClick={openNewModal}
+                        style={{ background: '#c5111a' }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#7d0907'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#c5111a'}
+                    >
+                        <span className="material-icons" style={{ fontSize: 18 }}>add_circle</span>
+                        Attach Vehicle
+                    </button>
+                </div>
             </div>
 
-            <div className="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-3 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">V-ID</th>
-                            <th className="px-3 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th className="px-3 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Brand</th>
-                            <th className="px-3 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Model</th>
-                            <th className="px-3 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">No</th>
-                            <th className="px-3 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Driver</th>
-                            <th className="px-3 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Owner</th>
-                            <th className="px-3 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {loading ? (
-                            <tr><td colSpan="8" className="text-center py-4">Loading...</td></tr>
-                        ) : vehicles.length === 0 ? (
-                            <tr><td colSpan="8" className="text-center py-4">No vehicles found.</td></tr>
-                        ) : (
-                            vehicles.map((v) => (
-                                <tr key={v.v_id} className="hover:bg-gray-50">
-                                    <td className="px-3 py-4 whitespace-nowrap font-bold text-gray-900">{v.v_id}</td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-gray-500">{v.v_cat}</td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-gray-500">{v.v_brand}</td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-gray-500">{v.v_model}</td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-gray-500">{v.v_no}</td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-gray-500">{v.d_name} ({v.d_mobile})</td>
-                                    <td className="px-3 py-4 whitespace-nowrap text-gray-500">{v.o_name} ({v.o_mobile})</td>
-                                    <td className="px-3 py-4 whitespace-nowrap font-medium">
-                                        <button onClick={() => openEditModal(v)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+            {/* ── Page Body ── */}
+            <div className="page-body">
+                <div className="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>V-ID</th>
+                                <th>Category</th>
+                                <th>Brand</th>
+                                <th>Model</th>
+                                <th>Registration</th>
+                                <th>Driver</th>
+                                <th>Owner</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '32px', color: '#7a8fa0' }}>Loading fleet data…</td></tr>
+                            ) : vehicles.length === 0 ? (
+                                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '32px', color: '#7a8fa0' }}>No vehicles registered.</td></tr>
+                            ) : (
+                                vehicles.map((v) => (
+                                    <tr key={v.v_id}>
+                                        <td style={{ fontWeight: 800, color: '#023149', fontFamily: 'monospace', fontSize: 13 }}>{v.v_id}</td>
+                                        <td><span className="badge badge-blue">{v.v_cat}</span></td>
+                                        <td style={{ fontWeight: 600, color: '#023149' }}>{v.v_brand}</td>
+                                        <td style={{ fontWeight: 600 }}>{v.v_model}</td>
+                                        <td style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: '#023149' }}>{v.v_no}</td>
+                                        <td>
+                                            <div style={{ fontWeight: 600, color: '#023149' }}>{v.d_name}</div>
+                                            <div style={{ fontSize: 12, color: '#6b7280' }}>{v.d_mobile}</div>
+                                        </td>
+                                        <td>
+                                            <div style={{ fontWeight: 600, color: '#475569' }}>{v.o_name}</div>
+                                            <div style={{ fontSize: 12, color: '#6b7280' }}>{v.o_mobile}</div>
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button
+                                                className="btn-ghost"
+                                                onClick={() => openEditModal(v)}
+                                                style={{ padding: '6px 12px' }}
+                                            >
+                                                <span className="material-icons" style={{ fontSize: 16 }}>edit</span>
+                                                Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
-                    <div className="relative bg-white rounded-lg shadow-xl p-8 w-full max-w-6xl m-4 max-h-[95vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-semibold text-gray-900">{isEdit ? 'Edit Vehicle' : 'Attach New Vehicle'}</h3>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-500">
-                                <span className="text-2xl">&times;</span>
+                <div className="modal-overlay">
+                    <div className="modal" style={{ maxWidth: 840 }}>
+                        <div className="modal-header">
+                            <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span className="material-icons" style={{ color: '#023149' }}>directions_car</span>
+                                {isEdit ? 'Update Vehicle Record' : 'Attach New Fleet Member'}
+                            </h2>
+                            <button onClick={() => setShowModal(false)}>
+                                <span className="material-icons">close</span>
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                            {/* Column 1 */}
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-gray-700">Vehicle Category</label>
-                                    <select name="v_cat" value={formData.v_cat} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1">
-                                        <option value="">Select Category</option>
-                                        <option value="Mini">Mini</option>
-                                        <option value="Sedan">Sedan</option>
-                                        <option value="SUV">SUV</option>
-                                        <option value="Van">Van</option>
-                                        <option value="Tempo">Tempo</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Joining Date</label>
-                                    <input type="date" name="joining" value={formData.joining} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Pollution Exp Date</label>
-                                    <input type="date" name="puc_date" value={formData.puc_date} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Seat Availability</label>
-                                    <input type="text" name="seat_a" value={formData.seat_a} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Advance Amount</label>
-                                    <input type="text" name="adv_amt" value={formData.adv_amt} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                            </div>
+                        <form id="vehicleForm" onSubmit={handleSubmit} style={{ overflowY: 'auto', maxHeight: '75vh' }}>
+                            <div className="modal-body" style={{ padding: 32, paddingBottom: 16 }}>
 
-                            {/* Column 2 */}
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-gray-700">Vehicle Brand</label>
-                                    <select name="v_brand" value={formData.v_brand} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1">
-                                        <option value="">Select Brand</option>
-                                        <option value="Honda">Honda</option>
-                                        <option value="Toyota">Toyota</option>
-                                        <option value="Maruthi">Maruthi</option>
-                                        <option value="Hyundai">Hyundai</option>
-                                        <option value="Tata">Tata</option>
-                                        <option value="chevrolate">Chevrolate</option>
-                                        <option value="Ashok Laylond">Ashok Laylond</option>
-                                        <option value="Ford">Ford</option>
-                                        <option value="Mahendra">Mahendra</option>
-                                        <option value="Nissan">Nissan</option>
-                                        <option value="Renault">Renault</option>
-                                        <option value="Tempo">Tempo</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Ins Exp Date</label>
-                                    <input type="date" name="ie_date" value={formData.ie_date} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Road Tax Date</label>
-                                    <input type="date" name="rt_date" value={formData.rt_date} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Attach Type</label>
-                                    <select name="att_type" value={formData.att_type} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1">
-                                        <option value="">Select Attachment Type</option>
-                                        <option value="OCD">Owner Cum Driver</option>
-                                        <option value="O&D">Owner With Driver</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Year Model</label>
-                                    <input type="text" name="y_model" value={formData.y_model} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                            </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 40 }}>
 
-                            {/* Column 3 */}
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-gray-700">Vehicle Model</label>
-                                    <select name="v_model" value={formData.v_model} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1">
-                                        <option value="">Select Model</option>
-                                        <option value="Swift">Swift</option>
-                                        <option value="Xcent">Xcent</option>
-                                        <option value="Indica">Indica</option>
-                                        <option value="Bolt">Bolt</option>
-                                        {/* Add more as needed */}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">FC Exp Date</label>
-                                    <input type="date" name="fc_date" value={formData.fc_date} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Vehicle ID</label>
-                                    <input type="text" name="v_id" value={formData.v_id} onChange={handleInputChange} readOnly={isEdit} className={`mt-1 block w-full border rounded p-1 ${isEdit ? 'bg-gray-100' : ''}`} required />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Driver Name</label>
-                                    <input type="text" name="d_name" value={formData.d_name} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Driver Mobile</label>
-                                    <input type="text" name="d_mobile" value={formData.d_mobile} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Vacant</label>
-                                    <input type="text" name="vacant_place" value={formData.vacant_place} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                            </div>
+                                    <div>
+                                        <h3 style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                                            Specifications
+                                        </h3>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                            <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Category <span style={{ color: '#c5111a' }}>*</span></label>
+                                                    <select name="v_cat" value={formData.v_cat} onChange={handleChange} required>
+                                                        <option value="">Select Category</option>
+                                                        <option value="Mini">Mini</option>
+                                                        <option value="Sedan">Sedan</option>
+                                                        <option value="SUV">SUV</option>
+                                                        <option value="Van">Van</option>
+                                                        <option value="Tempo">Tempo</option>
+                                                    </select>
+                                                </div>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Brand <span style={{ color: '#c5111a' }}>*</span></label>
+                                                    <select name="v_brand" value={formData.v_brand} onChange={handleChange} required>
+                                                        <option value="">Select Brand</option>
+                                                        <option value="Honda">Honda</option>
+                                                        <option value="Toyota">Toyota</option>
+                                                        <option value="Maruthi">Maruthi</option>
+                                                        <option value="Hyundai">Hyundai</option>
+                                                        <option value="Tata">Tata</option>
+                                                        <option value="Renault">Renault</option>
+                                                    </select>
+                                                </div>
+                                            </div>
 
-                            {/* Column 4 */}
-                            <div className="space-y-3">
-                                <div>
-                                    <label className="block text-gray-700">Vehicle No</label>
-                                    <input type="text" name="v_no" value={formData.v_no} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" required />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Permit Exp Date</label>
-                                    <input type="date" name="pe_date" value={formData.pe_date} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Ownership</label>
-                                    <select name="v_own" value={formData.v_own} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1">
-                                        <option value="1">Attach</option>
-                                        <option value="0">Admin</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Owner Name</label>
-                                    <input type="text" name="o_name" value={formData.o_name} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                                <div>
-                                    <label className="block text-gray-700">Owner Mobile</label>
-                                    <input type="text" name="o_mobile" value={formData.o_mobile} onChange={handleInputChange} className="mt-1 block w-full border rounded p-1" />
-                                </div>
-                            </div>
+                                            <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Model <span style={{ color: '#c5111a' }}>*</span></label>
+                                                    <input type="text" name="v_model" value={formData.v_model} onChange={handleChange} placeholder="e.g. Swift" required />
+                                                </div>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Registration No <span style={{ color: '#c5111a' }}>*</span></label>
+                                                    <input type="text" name="v_no" value={formData.v_no} onChange={handleChange} placeholder="KA-00-XX-0000" required style={{ textTransform: 'uppercase' }} />
+                                                </div>
+                                            </div>
 
-                            <div className="col-span-1 md:col-span-4 flex justify-end space-x-4 mt-4 pt-4 border-t">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                >
-                                    {isEdit ? 'Update Vehicle' : 'Attach Vehicle'}
-                                </button>
+                                            <h3 style={{ margin: '24px 0 16px', fontSize: 13, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                                                Operator Details
+                                            </h3>
+
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>Vehicle ID</label>
+                                                <input type="text" name="v_id" value={formData.v_id} onChange={handleChange} readOnly={isEdit} style={{ background: isEdit ? '#f8fafc' : '#fff' }} required />
+                                            </div>
+
+                                            <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Driver Name</label>
+                                                    <input type="text" name="d_name" value={formData.d_name} onChange={handleChange} />
+                                                </div>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Driver Mobile</label>
+                                                    <input type="text" name="d_mobile" value={formData.d_mobile} onChange={handleChange} />
+                                                </div>
+                                            </div>
+
+                                            <div className="form-field" style={{ margin: 0 }}>
+                                                <label>Ownership</label>
+                                                <select name="v_own" value={formData.v_own} onChange={handleChange}>
+                                                    <option value="1">Third Party / Attached</option>
+                                                    <option value="0">Company Owned</option>
+                                                </select>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h3 style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                                            Compliance &amp; Dates
+                                        </h3>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                            <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr', background: '#f8fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Joining Date</label>
+                                                    <input type="date" name="joining" value={formData.joining} onChange={handleChange} />
+                                                </div>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Fitness (FC) Exp</label>
+                                                    <input type="date" name="fc_date" value={formData.fc_date} onChange={handleChange} />
+                                                </div>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Insurance Exp</label>
+                                                    <input type="date" name="ie_date" value={formData.ie_date} onChange={handleChange} />
+                                                </div>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Pollution Exp</label>
+                                                    <input type="date" name="puc_date" value={formData.puc_date} onChange={handleChange} />
+                                                </div>
+                                            </div>
+
+                                            <h3 style={{ margin: '24px 0 16px', fontSize: 13, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                                                Registry Info
+                                            </h3>
+
+                                            <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Owner Name</label>
+                                                    <input type="text" name="o_name" value={formData.o_name} onChange={handleChange} />
+                                                </div>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Owner Mobile</label>
+                                                    <input type="text" name="o_mobile" value={formData.o_mobile} onChange={handleChange} />
+                                                </div>
+                                            </div>
+
+                                            <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Capacity (Seats)</label>
+                                                    <input type="text" name="seat_a" value={formData.seat_a} onChange={handleChange} />
+                                                </div>
+                                                <div className="form-field" style={{ margin: 0 }}>
+                                                    <label>Base Location</label>
+                                                    <input type="text" name="vacant_place" value={formData.vacant_place} onChange={handleChange} placeholder="Current location" />
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </form>
+
+                        <div className="modal-footer" style={{ padding: '24px 32px' }}>
+                            <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Discard</button>
+                            <button type="submit" form="vehicleForm" className="btn-primary" style={{ background: '#023149', height: 44, padding: '0 32px' }} onMouseEnter={e => e.currentTarget.style.background = '#012030'} onMouseLeave={e => e.currentTarget.style.background = '#023149'}>
+                                <span className="material-icons" style={{ fontSize: 18 }}>gavel</span>
+                                {isEdit ? 'Save Changes' : 'Register Vehicle'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -306,3 +337,4 @@ const VehicleMaster = () => {
 };
 
 export default VehicleMaster;
+

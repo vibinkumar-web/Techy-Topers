@@ -1,9 +1,10 @@
 import { useState, useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const RefusalReport = () => {
+    const toast = useToast();
     const { api } = useContext(AuthContext);
-    // 1. Ensure vehicleIds state is always initialized as an empty array.
     const [vehicleIds, setVehicleIds] = useState([]);
     const [reportData, setReportData] = useState([]);
     const [filters, setFilters] = useState({
@@ -12,21 +13,19 @@ const RefusalReport = () => {
         to_date: ''
     });
     const [loading, setLoading] = useState(false);
+    const [searched, setSearched] = useState(false);
 
     useEffect(() => {
         const fetchVehicleIds = async () => {
             try {
                 const response = await api.get('/refusal_report.php?list=true');
-                // 2. Correctly handle API response and extract array data.
                 const data = response.data;
                 if (Array.isArray(data)) {
                     setVehicleIds(data);
                 } else if (data && typeof data === 'object' && Array.isArray(data.data)) {
-                    // In case it's wrapped
                     setVehicleIds(data.data);
                 } else {
-                    console.warn("API response for vehicle list is not an array:", data);
-                    setVehicleIds([]); // 7. Add fallback empty array when data is invalid.
+                    setVehicleIds([]);
                 }
             } catch (error) {
                 console.error("Error fetching vehicle IDs", error);
@@ -43,11 +42,11 @@ const RefusalReport = () => {
     const handleSearch = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setSearched(true);
         try {
             const response = await api.get(`/refusal_report.php?v_id=${filters.v_id}&from_date=${filters.from_date}&to_date=${filters.to_date}`);
-            // Safety check for reportData as well
             if (Array.isArray(response.data)) {
-                setReportData(response.data);
+                setReportData(Array.isArray(response.data) ? response.data : []);
             } else {
                 setReportData([]);
             }
@@ -60,92 +59,134 @@ const RefusalReport = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Trip Refusal Report</h1>
-
-            <div className="bg-white shadow rounded-lg p-6 mb-8">
-                <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <div className="page-wrap">
+            <div className="page-header">
+                <div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Vehicle ID</label>
-                        <select
-                            name="v_id"
-                            value={filters.v_id}
-                            onChange={handleFilterChange}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
-                        >
-                            <option value="">Select Vehicle ID</option>
-                            <option value="All">All</option>
-                            {/* 3. Add Array.isArray safety check before calling map. */}
-                            {/* 4. Prevent crash if response is null or object. */}
-                            {Array.isArray(vehicleIds) && vehicleIds.map((id, index) => (
-                                <option key={id || index} value={id}>{id}</option>
-                            ))}
-                        </select>
+                        <h1>Asset Rejection Log</h1>
+                        <p>Evaluate booking refusals mapped by vehicle node</p>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">From Date</label>
+                </div>
+            </div>
+
+            <div className="page-body">
+                <form onSubmit={handleSearch} style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1.5fr) 1fr 1fr auto', gap: 24, alignItems: 'flex-end', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: 24, marginBottom: 32, boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
+                    <div className="form-field" style={{ margin: 0 }}>
+                        <label style={{ fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>Target Asset Node</label>
+                        <div className="input-with-icon">
+                            <span className="material-icons" style={{ color: '#023149' }}>directions_car</span>
+                            <select
+                                name="v_id"
+                                value={filters.v_id}
+                                onChange={handleFilterChange}
+                                style={{ height: 48, fontWeight: 700 }}
+                            >
+                                <option value="">Select Asset Hash</option>
+                                <option value="All">Global Matrix (All)</option>
+                                {Array.isArray(vehicleIds) && vehicleIds.map((id, index) => (
+                                    <option key={id || index} value={id}>{id}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="form-field" style={{ margin: 0 }}>
+                        <label style={{ fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>Origin Epoch</label>
                         <input
                             type="date"
                             name="from_date"
                             value={filters.from_date}
                             onChange={handleFilterChange}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
                             required
+                            style={{ height: 48, fontWeight: 600, color: '#0f172a' }}
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">To Date</label>
+                    <div className="form-field" style={{ margin: 0 }}>
+                        <label style={{ fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>Terminus Epoch</label>
                         <input
                             type="date"
                             name="to_date"
                             value={filters.to_date}
                             onChange={handleFilterChange}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
                             required
+                            style={{ height: 48, fontWeight: 600, color: '#0f172a' }}
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                        className="btn-primary"
+                        style={{ height: 48, padding: '0 32px', background: '#c5111a', opacity: loading ? 0.7 : 1, cursor: loading ? 'wait' : 'pointer', fontSize: 15 }}
+                        onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#7d0907'; }}
+                        onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#c5111a'; }}
                     >
-                        {loading ? 'Searching...' : 'Search'}
+                        <span className="material-icons" style={{ fontSize: 20 }}>block</span>
+                        {loading ? 'Evaluating...' : 'Query Rejections'}
                     </button>
                 </form>
-            </div>
 
-            <div className="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">B-ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">V-ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drop</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {!Array.isArray(reportData) || reportData.length === 0 ? (
-                            <tr><td colSpan="6" className="text-center py-4">No records found.</td></tr>
-                        ) : (
-                            reportData.map((record, index) => (
-                                <tr key={index}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{record.date_refused}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.b_id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.v_id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.reason_for}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.pickup}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.drop_place}</td>
+                <div className="table-wrap" style={{ background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', overflow: 'hidden' }}>
+                    <table style={{ margin: 0 }}>
+                        <thead style={{ background: '#f8fafc' }}>
+                            <tr>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Timestamp Vector</th>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Booking Ref</th>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Asset Identity</th>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em', minWidth: 200 }}>Rejection Heuristic</th>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Origin Interface</th>
+                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Target Interface</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>sync</span>
+                                            <div>Querying asset rejection records...</div>
+                                        </div>
+                                    </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : !searched ? (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>date_range</span>
+                                            <div>Declare temporal boundaries to initiate heuristic query.</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (!Array.isArray(reportData) || reportData.length === 0) ? (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>verified</span>
+                                            <div>No anomalous rejections detected for designated parameters.</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                reportData.map((record, index) => (
+                                    <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                        <td style={{ padding: '12px 24px', fontWeight: 600, color: '#475569', fontSize: 13 }}>{record.date_refused}</td>
+                                        <td style={{ padding: '12px 24px', fontWeight: 800, color: '#023149', fontFamily: 'monospace', fontSize: 13 }}>#{record.b_id}</td>
+                                        <td style={{ padding: '12px 24px', fontWeight: 800, color: '#023149', fontSize: 14 }}>{record.v_id}</td>
+                                        <td style={{ padding: '12px 24px' }}>
+                                            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '6px 12px', borderRadius: 6, fontSize: 13, fontWeight: 600, display: 'inline-block' }}>
+                                                {record.reason_for}
+                                            </div>
+                                        </td>
+                                        <td style={{ padding: '12px 24px', color: '#475569', fontSize: 13 }}>{record.pickup}</td>
+                                        <td style={{ padding: '12px 24px', color: '#475569', fontSize: 13 }}>{record.drop_place}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
 };
 
 export default RefusalReport;
+

@@ -1,11 +1,18 @@
 import { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
+
+
+
+
+import AuthContext from '../context/AuthContext';
 const LocalTrip = () => {
+    const toast = useToast();
     const { v_id } = useParams();
     const navigate = useNavigate();
     const { api, user } = useContext(AuthContext);
+    const [vehicleRates, setVehicleRates] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Trip and Tariff Data
@@ -49,7 +56,17 @@ const LocalTrip = () => {
 
     useEffect(() => {
         fetchTripDetails();
+        fetchVehicleRates();
     }, [v_id]);
+
+    const fetchVehicleRates = async () => {
+        try {
+            const res = await api.get('/vehicle_pricing.php');
+            setVehicleRates(res.data || []);
+        } catch (e) {
+            console.error("Failed to load vehicle rates", e);
+        }
+    };
 
     const fetchTripDetails = async () => {
         try {
@@ -71,17 +88,18 @@ const LocalTrip = () => {
             setLoading(false);
         } catch (error) {
             console.error("Error fetching trip details", error);
-            alert("Failed to load trip details.");
+            toast("Failed to load trip details.", 'error');
             setLoading(false);
         }
     };
 
-    const handleInputChange = (e) => {
+
+
+    const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
-    // Calculation Logic (Triggered on key inputs in legacy, we'll use useEffect on dependencies)
     useEffect(() => {
         calculateTotals();
     }, [
@@ -99,23 +117,27 @@ const LocalTrip = () => {
         const close = parseFloat(formData.closing_km) || 0;
         const tripKm = close - open;
 
-        // Logic from legacy:
-        // trip_km = close - open
-        // extra_km = trip_km - mini_km (from tariff)
-        // Check hours logic too (simplified here for brevity)
-
         let pkgName = '';
         let pkgCharge = 0;
         let extraKm = 0;
         let extraCharge = 0;
 
-        // Basic tariff logic (example based on legacy output):
-        // if tripKm <= tariff.mini_km -> Package = "Mini", Charge = tariff.min_amt
-        // else -> Extra KM logic
-
         const minKm = parseFloat(tariff?.mini_km) || 0;
         const minAmt = parseFloat(tariff?.min_amt) || 0;
-        const perKm = parseFloat(tariff?.c_p_km) || 0; // Cost per KM ?
+
+        let perKmRate = parseFloat(tariff?.c_p_km) || 0;
+        // Override with dynamic vehicle rate if it exists
+        if (tripData?.v_type) {
+            const vTypeSearch = tripData.v_type.toLowerCase().trim();
+            const match = vehicleRates.find(v => v.v_name.toLowerCase().includes(vTypeSearch) || vTypeSearch.includes(v.v_name.toLowerCase().split(' ')[0]));
+            if (match) {
+                const isAc = formData.ac_value === '1';
+                const dynamicRate = isAc ? parseFloat(match.kmac) : parseFloat(match.kmnonac);
+                if (dynamicRate > 0) {
+                    perKmRate = dynamicRate;
+                }
+            }
+        }
 
         if (tripKm <= minKm) {
             pkgName = `${minKm} KM Package`;
@@ -127,11 +149,10 @@ const LocalTrip = () => {
             extraKm = tripKm - minKm;
         }
 
-        extraCharge = extraKm * perKm; // Assuming perKm cost
+        extraCharge = extraKm * perKmRate;
 
         const subTotal = pkgCharge + extraCharge;
 
-        // Other charges
         const others = (parseFloat(formData.other_charge) || 0) +
             (parseFloat(formData.return_charge) || 0) +
             (parseFloat(formData.waiting_charge) || 0) +
@@ -170,8 +191,8 @@ const LocalTrip = () => {
                 opening_km: formData.opening_km,
                 closing_km: formData.closing_km,
                 remarks: formData.remarks,
-                pickup_time: tripData.bookin_time, // Or format it?
-                p_date: tripData.bookin_time.split(' ')[0], // Approximate
+                pickup_time: tripData.bookin_time,
+                p_date: tripData.bookin_time.split(' ')[0],
                 drop_time: formData.drop_time,
                 d_date: formData.drop_date,
                 ac_type: formData.ac_value,
@@ -179,9 +200,9 @@ const LocalTrip = () => {
                 v_type: tripData.v_type,
                 picup_place: tripData.p_city,
                 drop_place: tripData.d_place,
-                rwards_point: 0, // Placeholder
+                rwards_point: 0,
                 packagename: formData.package_name,
-                other_charge: formData.other_expenses, // Sum of others?
+                other_charge: formData.other_expenses,
                 net_total: formData.net_total,
                 paid_amount: formData.paid_amount,
                 discount: formData.discount,
@@ -193,125 +214,195 @@ const LocalTrip = () => {
                 pending: (parseFloat(formData.net_total) > parseFloat(formData.paid_amount)) ? '1' : '0',
                 user_id: user.emp_id
             });
-            alert('Local Trip Closed Successfully!');
-            navigate('/');
+            toast('Local Trip Closed Successfully! View dashboard for summary.');
+            navigate('/dashboard');
         } catch (error) {
             console.error("Error closing local trip", error);
-            alert("Failed to close trip.");
+            toast("Failed to close trip.", 'error');
         }
     };
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return (
+        <div className="page-wrap">
+            <div className="page-body" style={{ padding: 60, textAlign: 'center', color: '#023149', fontWeight: 600 }}>
+                Loading trip execution specifics...
+            </div>
+        </div>
+    );
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Local Trip Closing</h1>
-
-            <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6">
-                {/* Trip Info Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-sm">
+        <div className="page-wrap">
+            <div className="page-header">
+                <div>
                     <div>
-                        <span className="block font-bold">Booking ID:</span> {tripData.b_id}
-                    </div>
-                    <div>
-                        <span className="block font-bold">Vehicle:</span> {tripData.v_id} ({tripData.v_type})
-                    </div>
-                    <div>
-                        <span className="block font-bold">Customer:</span> {tripData.b_name}
+                        <h1>Local Trip Completion Logging</h1>
+                        <p>Complete execution parameters, resolve calculated fares, and archive local sector trips</p>
                     </div>
                 </div>
+            </div>
 
-                {/* KM & Time */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Opening KM</label>
-                        <input type="text" name="opening_km" value={formData.opening_km} readOnly className="mt-1 block w-full bg-gray-100 border rounded p-2" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Closing KM</label>
-                        <input type="number" name="closing_km" value={formData.closing_km} onChange={handleInputChange} className="mt-1 block w-full border rounded p-2" required />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Trip KM</label>
-                        <input type="text" value={formData.trip_km} readOnly className="mt-1 block w-full bg-gray-100 border rounded p-2" />
-                    </div>
-                </div>
+            <div className="page-body">
+                <div style={{ maxWidth: 1040, margin: '0 auto' }}>
+                    <form onSubmit={handleSubmit} className="section" style={{ padding: 40 }}>
 
-                {/* Charges Calculation */}
-                <div className="bg-blue-50 p-4 rounded mb-6">
-                    <h3 className="font-medium text-blue-900 mb-2">Charges</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <label className="block text-xs font-medium">Package</label>
-                            <input type="text" value={formData.package_name} readOnly className="mt-1 w-full text-sm border p-1" />
+                        {/* Summary Header Cards */}
+                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 24, marginBottom: 40, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
+                            <div style={{ display: 'flex', gap: 16 }}>
+                                <div style={{ width: 44, height: 44, borderRadius: 22, background: '#f0f9ff', color: '#0369a1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span className="material-icons" style={{ fontSize: 22 }}>receipt_long</span>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 4, letterSpacing: '.05em' }}>Booking Referencer</div>
+                                    <div style={{ fontSize: 18, fontWeight: 800, color: '#023149', fontFamily: 'monospace' }}>#{tripData.b_id}</div>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 16, borderLeft: '1px solid #e2e8f0', paddingLeft: 32 }}>
+                                <div style={{ width: 44, height: 44, borderRadius: 22, background: '#f0fdf4', color: '#15803d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span className="material-icons" style={{ fontSize: 22 }}>airport_shuttle</span>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 4, letterSpacing: '.05em' }}>Assigned Asset</div>
+                                    <div style={{ fontSize: 16, fontWeight: 800, color: '#023149' }}>
+                                        {tripData.v_id}
+                                    </div>
+                                    <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>{tripData.v_type}</div>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 16, borderLeft: '1px solid #e2e8f0', paddingLeft: 32 }}>
+                                <div style={{ width: 44, height: 44, borderRadius: 22, background: '#fef2f2', color: '#b91c1c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <span className="material-icons" style={{ fontSize: 22 }}>person_pin</span>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 4, letterSpacing: '.05em' }}>Customer Profile</div>
+                                    <div style={{ fontSize: 16, fontWeight: 800, color: '#023149' }}>{tripData.b_name}</div>
+                                    <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>{tripData.m_no}</div>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-xs font-medium">Pkg Charge</label>
-                            <input type="text" value={formData.package_charge} readOnly className="mt-1 w-full text-sm border p-1" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium">Extra KM</label>
-                            <input type="text" value={formData.extra_km} readOnly className="mt-1 w-full text-sm border p-1" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium">Ext. Charge</label>
-                            <input type="text" value={formData.extra_km_charge} readOnly className="mt-1 w-full text-sm border p-1" />
-                        </div>
-                    </div>
-                </div>
 
-                {/* Other Charges (Expandable/Grid) */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-sm">
-                    <div>
-                        <label>Toll Gate</label>
-                        <input type="number" name="toll_gate" value={formData.toll_gate} onChange={handleInputChange} className="mt-1 w-full border rounded p-1" />
-                    </div>
-                    <div>
-                        <label>Driver Batta</label>
-                        <input type="number" name="driver_batta" value={formData.driver_batta} onChange={handleInputChange} className="mt-1 w-full border rounded p-1" />
-                    </div>
-                    <div>
-                        <label>Parking</label>
-                        <input type="number" name="parking" value={formData.parking} onChange={handleInputChange} className="mt-1 w-full border rounded p-1" />
-                    </div>
-                    <div>
-                        <label>Discount</label>
-                        <input type="number" name="discount" value={formData.discount} onChange={handleInputChange} className="mt-1 w-full border rounded p-1" />
-                    </div>
-                </div>
+                        {/* Mileage Calibration Section */}
+                        <div style={{ marginBottom: 40 }}>
+                            <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                                <span className="material-icons" style={{ fontSize: 18, color: '#689abb', verticalAlign: 'text-bottom', marginRight: 8 }}>route</span>
+                                Mileage Registration &amp; Audit
+                            </h3>
+                            <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label>Opening Odometer (KM)</label>
+                                    <input type="text" name="opening_km" value={formData.opening_km} readOnly style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', color: '#64748b' }} title="Opening logged mileage" />
+                                </div>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label>Closing Odometer (KM) <span style={{ color: '#c5111a' }}>*</span></label>
+                                    <input type="number" name="closing_km" value={formData.closing_km} onChange={handleChange} required />
+                                </div>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label>Total Billed Distance (KM)</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input type="text" value={formData.trip_km} readOnly style={{ background: '#f0f9ff', border: '1px solid #bae6fd', color: '#0369a1', fontWeight: 800, fontSize: 16, paddingRight: 48 }} />
+                                        <span style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#0284c7', fontSize: 13 }}>KM</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                {/* Totals */}
-                <div className="border-t pt-4">
-                    <div className="flex justify-end gap-8 text-right">
-                        <div>
-                            <div className="text-sm text-gray-500">Gross Total</div>
-                            <div className="font-bold">{formData.total_amount}</div>
+                        {/* Package & Tariff Resolution */}
+                        <div style={{ marginBottom: 40, background: '#fdf6e8', padding: 24, borderRadius: 8, border: '1px solid #e8d4aa' }}>
+                            <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 800, color: '#023149', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span className="material-icons" style={{ fontSize: 18, color: '#c5111a' }}>calculate</span>
+                                Derived Package Tariff Matrix
+                            </h3>
+                            <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label style={{ color: '#7d0907' }}>Calculated Base Package</label>
+                                    <input type="text" value={formData.package_name} readOnly style={{ background: '#fff', fontSize: 14, fontWeight: 600, color: '#023149', border: '1px solid #f1f5f9' }} />
+                                </div>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label style={{ color: '#7d0907' }}>Base Quota Allowance Charge</label>
+                                    <input type="text" value={`₹ ${formData.package_charge.toFixed(2)}`} readOnly style={{ background: '#fff', fontSize: 14, fontWeight: 600, color: '#023149', border: '1px solid #f1f5f9' }} />
+                                </div>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label style={{ color: '#7d0907' }}>Threshold Exceedance (KM)</label>
+                                    <input type="text" value={`${formData.extra_km} KM`} readOnly style={{ background: '#fff', fontSize: 14, fontWeight: 600, color: '#023149', border: '1px solid #f1f5f9' }} />
+                                </div>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label style={{ color: '#7d0907' }}>Surplus Mileage Levy</label>
+                                    <input type="text" value={`₹ ${formData.extra_km_charge.toFixed(2)}`} readOnly style={{ background: '#fff', fontSize: 14, fontWeight: 600, color: '#023149', border: '1px solid #f1f5f9' }} />
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <div className="text-sm text-gray-500">Advance</div>
-                            <div className="font-bold text-red-600">-{formData.advance}</div>
-                        </div>
-                        <div>
-                            <div className="text-sm text-gray-500">Net Total</div>
-                            <div className="text-xl font-bold text-green-600">{formData.net_total}</div>
-                        </div>
-                    </div>
-                </div>
 
-                {/* Pay */}
-                <div className="mt-6 flex justify-end items-end gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Paid Amount</label>
-                        <input type="number" name="paid_amount" value={formData.paid_amount} onChange={handleInputChange} className="mt-1 block w-32 border rounded p-2 border-indigo-500" required />
-                    </div>
-                    <button
-                        type="submit"
-                        className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
-                    >
-                        Close Trip
-                    </button>
+                        {/* Additional Cost Centers */}
+                        <div style={{ marginBottom: 40 }}>
+                            <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 800, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e2e8f0', paddingBottom: 12 }}>
+                                Ancillary Cost Centers &amp; Rebates
+                            </h3>
+                            <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label>Route Toll Gate Surcharge (₹)</label>
+                                    <input type="number" name="toll_gate" value={formData.toll_gate} onChange={handleChange} min="0" placeholder="0" />
+                                </div>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label>Driver Operator Batta (₹)</label>
+                                    <input type="number" name="driver_batta" value={formData.driver_batta} onChange={handleChange} min="0" placeholder="0" />
+                                </div>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label>Facility Parking Outlay (₹)</label>
+                                    <input type="number" name="parking" value={formData.parking} onChange={handleChange} min="0" placeholder="0" />
+                                </div>
+                                <div className="form-field" style={{ margin: 0 }}>
+                                    <label>Applied Goodwill Discount (₹)</label>
+                                    <input type="number" name="discount" value={formData.discount} onChange={handleChange} min="0" placeholder="0" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Summary & Settlement Gateway */}
+                        <div style={{ borderTop: '2px dashed #cbd5e1', paddingTop: 40 }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 64, marginBottom: 40 }}>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '.05em' }}>Gross Evaluation</div>
+                                    <div style={{ fontSize: 24, fontWeight: 800, color: '#023149' }}>₹ {Number(formData.total_amount).toFixed(2)}</div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '.05em' }}>Capital Secured (Advance)</div>
+                                    <div style={{ fontSize: 24, fontWeight: 800, color: '#c5111a' }}>- ₹ {Number(formData.advance).toFixed(2)}</div>
+                                </div>
+                                <div style={{ textAlign: 'right', background: '#f0fdf4', padding: '16px 32px', borderRadius: 8, border: '1px solid #bbf7d0', transform: 'translateY(-16px)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                                    <div style={{ fontSize: 13, fontWeight: 800, color: '#166534', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '.05em', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <span className="material-icons" style={{ fontSize: 16 }}>account_balance_wallet</span>
+                                        Final Net Settlement
+                                    </div>
+                                    <div style={{ fontSize: 36, fontWeight: 900, color: '#15803d', letterSpacing: '-.02em' }}>₹ {Number(formData.net_total).toFixed(2)}</div>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end', gap: 24, background: '#f8fafc', padding: 24, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                                <div className="form-field" style={{ margin: 0, width: 240 }}>
+                                    <label style={{ fontSize: 13, color: '#023149' }}>Total Value Tendered (₹) <span style={{ color: '#c5111a' }}>*</span></label>
+                                    <div style={{ position: 'relative' }}>
+                                        <span style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: '#023149', fontSize: 18 }}>₹</span>
+                                        <input
+                                            type="number"
+                                            name="paid_amount"
+                                            value={formData.paid_amount}
+                                            onChange={handleChange}
+                                            required
+                                            style={{ fontSize: 18, fontWeight: 800, color: '#023149', borderColor: '#023149', paddingLeft: 40, height: 48 }}
+                                            min="0"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                </div>
+                                <button type="submit" className="btn-primary" style={{ height: 48, padding: '0 40px', background: '#15803d', fontSize: 15 }} onMouseEnter={e => e.currentTarget.style.background = '#166534'} onMouseLeave={e => e.currentTarget.style.background = '#15803d'}>
+                                    <span className="material-icons" style={{ fontSize: 20 }}>archive</span>
+                                    Log Closure &amp; Archive Trip
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     );
 };

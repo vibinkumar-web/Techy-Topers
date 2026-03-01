@@ -1,9 +1,10 @@
 import { useState, useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const AdvanceBookings = () => {
+    const toast = useToast();
     const { api } = useContext(AuthContext);
-    // 1. Ensure bookings state is always initialized as an empty array.
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -11,15 +12,11 @@ const AdvanceBookings = () => {
         const fetchAdvanceBookings = async () => {
             try {
                 const response = await api.get('/advance_bookings.php');
-                // 2. When fetching data from API, correctly extract the array from response.
-                // 3. If API returns an object, convert or assign the correct array field.
                 let data = response.data;
 
-                // 9. Add fallback empty array if response is invalid.
                 if (data && Array.isArray(data)) {
                     setBookings(data);
                 } else if (data && typeof data === 'object' && Array.isArray(data.bookings)) {
-                    // Handle case where API might return { bookings: [...] }
                     setBookings(data.bookings);
                 } else {
                     console.warn("API response is not an array:", data);
@@ -35,46 +32,78 @@ const AdvanceBookings = () => {
         fetchAdvanceBookings();
     }, [api]);
 
+    if (loading) return (
+        <div className="page-wrap">
+            <div className="page-body" style={{ padding: 40, textAlign: 'center', color: '#023149', fontWeight: 600 }}>
+                Loading advance bookings...
+            </div>
+        </div>
+    );
+
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Advance Bookings (Future & Unassigned)</h1>
-            <div className="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">B-ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Drop</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {loading ? (
-                            <tr><td colSpan="7" className="text-center py-4">Loading...</td></tr>
-                        ) : (
-                            // 4. Add safety check using Array.isArray before calling map.
-                            // 5. Prevent UI crash if data is null or undefined.
-                            Array.isArray(bookings) && bookings.length > 0 ? (
-                                bookings.map((booking) => (
-                                    <tr key={booking.b_id || Math.random()}>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{booking.b_id}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.b_date}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.pickup_time}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.cus_name} ({booking.cus_mobile})</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.pickup}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.drop_place}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.v_types}</td>
-                                    </tr>
-                                ))
+        <div className="page-wrap">
+            <div className="page-header">
+                <div>
+                    <div>
+                        <h1>Advanced booking</h1>
+                        <p>Need to fetch the trip data , display the bookings after 24 hrs scheduled time from the current booking taken time, when the booking meet below 24 hrs it will automatically fetch it assigning page</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="page-body" style={{ padding: '0 !important' }}>
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{ margin: 0, fontSize: 11, borderSpacing: 0, width: '100%', minWidth: 1500 }}>
+                        <thead style={{ background: '#0062ff', color: '#fff' }}>
+                            <tr>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>B-ID</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Status</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Call-Time</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Pick-up Date Time</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Pickup Place</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Drop Place</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Trip Type</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>V-Type</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>V-ID</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Driver No</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Booking Name</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Contact No</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>By</th>
+                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody style={{ background: '#e2e8f0', color: '#334155', fontWeight: 600 }}>
+                            {Array.isArray(bookings) && bookings.length > 0 ? (
+                                bookings.map((b) => {
+                                    return (
+                                        <tr key={b.b_id || Math.random()}>
+                                            <td style={{ padding: '12px 16px' }}>{b.b_id}</td>
+                                            <td style={{ padding: '12px 16px' }}>Pending</td>
+                                            <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>{b.b_date}</td>
+                                            <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>{b.pickup}</td>
+                                            <td style={{ padding: '12px 16px' }}>{b.p_city || b.pickup_place}</td>
+                                            <td style={{ padding: '12px 16px' }}>{b.d_place || b.drop_place}</td>
+                                            <td style={{ padding: '12px 16px' }}>{b.t_type || 'General'}</td>
+                                            <td style={{ padding: '12px 16px' }}>{b.v_types}</td>
+                                            <td style={{ padding: '12px 16px' }}>{b.q || '-'}</td>
+                                            <td style={{ padding: '12px 16px' }}>{b.d_mobile || '-'}</td>
+                                            <td style={{ padding: '12px 16px' }}>{b.cus_name}</td>
+                                            <td style={{ padding: '12px 16px' }}>{b.cus_mobile}</td>
+                                            <td style={{ padding: '12px 16px' }}>{b.r_status || 'Staff'}</td>
+                                            <td style={{ padding: '12px 16px' }}>{b.remarks || '-'}</td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
-                                <tr><td colSpan="7" className="text-center py-4">No advance bookings found.</td></tr>
-                            )
-                        )}
-                    </tbody>
-                </table>
+                                <tr>
+                                    <td colSpan="14" style={{ textAlign: 'center', padding: '40px', color: '#6b7280', background: '#fff' }}>
+                                        No unassigned advance bookings over 24 hours out found.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

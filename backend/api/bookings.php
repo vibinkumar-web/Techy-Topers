@@ -55,7 +55,8 @@ if ($method === 'GET') {
             remarks = :remarks,
             b_now = '0',
             assign = '0',
-            user_id = :user_id";
+            user_id = :user_id,
+            advance = :advance";
 
         $stmt = $db->prepare($query);
 
@@ -83,13 +84,20 @@ if ($method === 'GET') {
         $stmt->bindParam(":b_type", $data->b_type);
         $stmt->bindParam(":remarks", $data->remarks);
         $stmt->bindParam(":user_id", $data->user_id);
+        $advance = !empty($data->advance) ? $data->advance : 0;
+        $stmt->bindParam(":advance", $advance);
 
-        if ($stmt->execute()) {
-            http_response_code(201);
-            echo json_encode(array("message" => "Booking created.", "b_id" => $b_id));
-        } else {
+        try {
+            if ($stmt->execute()) {
+                http_response_code(201);
+                echo json_encode(array("message" => "Booking created.", "b_id" => $b_id));
+            } else {
+                http_response_code(503);
+                echo json_encode(array("message" => "Unable to create booking. Execute returned false."));
+            }
+        } catch (PDOException $e) {
             http_response_code(503);
-             echo json_encode(array("message" => "Unable to create booking."));
+            echo json_encode(array("message" => "Database Error: " . $e->getMessage()));
         }
     } else {
         http_response_code(400);

@@ -1,14 +1,10 @@
 <?php
-header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+
 
 include_once '../config/db.php';
 
@@ -114,6 +110,12 @@ if ($method === 'GET') {
         $stmt_ontrip->bindParam(":b_id", $data->b_id);
         $stmt_ontrip->execute();
 
+        // Mark booking as completed
+        $query_bk = "UPDATE f_ft_booking SET booking_status='1' WHERE b_id=:b_id";
+        $stmt_bk = $db->prepare($query_bk);
+        $stmt_bk->bindParam(":b_id", $data->b_id);
+        $stmt_bk->execute();
+
         // Update f_refused (missed opportunity tracking?)
         $query_ref = "UPDATE f_refused SET miss_amount=:trip_amount WHERE b_id=:b_id";
         $stmt_ref = $db->prepare($query_ref);
@@ -128,3 +130,5 @@ if ($method === 'GET') {
     }
 }
 ?>
+
+
