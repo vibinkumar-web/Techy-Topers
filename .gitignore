@@ -1,0 +1,38 @@
+# Root-level gitignore for Taxi Management System
+
+# Node dependencies
+node_modules/
+
+# Frontend build output — never commit dist
+frontend/dist/
+
+# Environment files — contain secrets, never commit
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.*.local
+backend/.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Test artifacts
+frontend/errors.json
+frontend/errors3.json
+frontend/current_errors.json
+frontend/final_check.txt
+frontend/final_lint.txt
+frontend/test_out.txt
+frontend/test_out_utf8.txt
+frontend/out.txt
+frontend/error_context.txt
+frontend/current_context.txt

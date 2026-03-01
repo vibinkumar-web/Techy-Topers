@@ -1,4 +1,5 @@
 <?php
+session_start();
 include '../config/db.php';
 $database = new Database();
 $pdo = $database->getConnection();
