@@ -8,7 +8,23 @@ $db = $database->getConnection();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Ensure app_config table exists (creates silently if missing)
+$db->exec("CREATE TABLE IF NOT EXISTS app_config (
+    config_key VARCHAR(100) PRIMARY KEY,
+    config_value VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)");
+
 if ($method === 'GET') {
+
+    // If requesting base_fare config
+    if (isset($_GET['config']) && $_GET['config'] === 'base_fare') {
+        $stmt = $db->query("SELECT config_value FROM app_config WHERE config_key = 'base_fare'");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        echo json_encode(["base_fare" => $row ? floatval($row['config_value']) : 190]);
+        exit;
+    }
+
     // Get SMS settings for current user (or global if designed that way)
     // Legacy code filtered by `update_by`, suggesting per-user settings?
     // "select * from smssetting where update_by='".$user_id."'";
@@ -39,6 +55,21 @@ if ($method === 'GET') {
 
 } elseif ($method === 'POST') {
     $data = json_decode(file_get_contents("php://input"));
+
+    // Handle base_fare save
+    if (isset($data->action) && $data->action === 'save_base_fare') {
+        $base_fare = floatval($data->base_fare ?? 190);
+        $stmt = $db->prepare("INSERT INTO app_config (config_key, config_value) VALUES ('base_fare', :val)
+                               ON DUPLICATE KEY UPDATE config_value = :val");
+        $stmt->bindParam(':val', $base_fare);
+        if ($stmt->execute()) {
+            echo json_encode(["message" => "Base fare updated successfully.", "base_fare" => $base_fare]);
+        } else {
+            http_response_code(503);
+            echo json_encode(["message" => "Failed to update base fare."]);
+        }
+        exit;
+    }
 
     if (isset($data->smsoption) && isset($data->user_id)) {
         

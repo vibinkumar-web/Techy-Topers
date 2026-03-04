@@ -2,14 +2,14 @@ import { useState, useEffect, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 
-        
 
-        
+
+
 
 import AuthContext from '../context/AuthContext';
 const TripClosing = () => {
     const toast = useToast();
-const { api, user } = useContext(AuthContext);
+    const { api, user } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const booking = location.state?.booking;
@@ -19,7 +19,9 @@ const { api, user } = useContext(AuthContext);
 
     const [tripDetails, setTripDetails] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [vehicleRates, setVehicleRates] = useState([]);
+
+    const [openingKmInput, setOpeningKmInput] = useState('');
+    const [savingOpeningKm, setSavingOpeningKm] = useState(false);
 
     const [formData, setFormData] = useState({
         closing_km: '',
@@ -33,8 +35,25 @@ const { api, user } = useContext(AuthContext);
 
     const [calculated, setCalculated] = useState({
         total_km: 0,
+        km_charge: 0,
+        base_fare: 0,
+        rate_per_km: 0,
         net_total: 0
     });
+
+    const [baseFareConfig, setBaseFareConfig] = useState(190);
+
+    useEffect(() => {
+        const fetchBaseFareConfig = async () => {
+            try {
+                const res = await api.get('/settings.php?config=base_fare');
+                setBaseFareConfig(res.data.base_fare ?? 190);
+            } catch (e) {
+                console.error('Failed to load base fare config', e);
+            }
+        };
+        fetchBaseFareConfig();
+    }, []);
 
     useEffect(() => {
         if (booking) {
@@ -43,17 +62,7 @@ const { api, user } = useContext(AuthContext);
         } else {
             fetchVehicles();
         }
-        fetchVehicleRates();
     }, [booking]);
-
-    const fetchVehicleRates = async () => {
-        try {
-            const res = await api.get('/vehicle_pricing.php');
-            setVehicleRates(res.data || []);
-        } catch (e) {
-            console.error("Failed to load dynamic rates", e);
-        }
-    };
 
     const fetchVehicles = async () => {
         try {
@@ -77,9 +86,9 @@ const { api, user } = useContext(AuthContext);
         }
     };
 
-    
-        
-const handleVehicleSelect = (e) => {
+
+
+    const handleVehicleSelect = (e) => {
         const b_id = e.target.value;
         setSelectedBid(b_id);
         if (b_id) {
@@ -90,51 +99,69 @@ const handleVehicleSelect = (e) => {
         }
     };
 
-    
-        
-const handleInputChange = (e) => {
+
+
+    const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    
-        
-const calculateFare = () => {
+
+
+    const calculateFare = () => {
         if (!tripDetails) return;
 
+        const BASE_FARE = baseFareConfig;
         const openKm = parseFloat(tripDetails.open_km) || 0;
         const closeKm = parseFloat(formData.closing_km) || 0;
-        const totalKm = closeKm - openKm;
 
-        let ratePerKm = 10;
-        let dynamicRateFound = false;
+        if (closeKm <= 0) return;
 
-        // Dynamic vehicle rate matching by vehicle type
-        if (tripDetails.v_type) {
-            const vTypeSearch = tripDetails.v_type.toLowerCase().trim();
-            const match = vehicleRates.find(v => v.v_name.toLowerCase().includes(vTypeSearch) || vTypeSearch.includes(v.v_name.toLowerCase().split(' ')[0]));
-            if (match) {
-                const isAc = tripDetails.ac_type === '1' || tripDetails.ac_type === 'ac';
-                const dynamicRate = isAc ? parseFloat(match.kmac) : parseFloat(match.kmnonac);
-                if (dynamicRate > 0) {
-                    ratePerKm = dynamicRate;
-                    dynamicRateFound = true;
-                }
-            }
+        if (closeKm < openKm) {
+            toast(`Closing KM (${closeKm}) must be greater than Opening KM (${openKm}).`, 'error');
+            setCalculated({ total_km: 0, km_charge: 0, base_fare: BASE_FARE, rate_per_km: 0, net_total: 0 });
+            return;
         }
 
-        // Fallback to legacy +2 bump only if we didn't use the master DB's exact AC rate
-        if (!dynamicRateFound && (tripDetails.ac_type === '1' || tripDetails.ac_type === 'ac')) ratePerKm += 2;
+        const totalKm = closeKm - openKm;
+
+        // Use rate directly from backend (joined from enquery_tariff)
+        const isAc = tripDetails.ac_type === '1' || tripDetails.ac_type === 'ac';
+        const ratePerKm = isAc ? parseFloat(tripDetails.kmac) || 0 : parseFloat(tripDetails.kmnonac) || 0;
 
         const kmCharge = totalKm * ratePerKm;
-        const netTotal = kmCharge + parseFloat(formData.waiting_charges || 0) + parseFloat(formData.other_charge || 0) - parseFloat(formData.discount || 0);
+        const netTotal = BASE_FARE + kmCharge + parseFloat(formData.waiting_charges || 0) + parseFloat(formData.other_charge || 0) - parseFloat(formData.discount || 0);
 
         setCalculated({
             total_km: totalKm,
+            km_charge: kmCharge,
+            base_fare: BASE_FARE,
+            rate_per_km: ratePerKm,
             net_total: netTotal
         });
 
         setFormData(prev => ({ ...prev, paid_amount: netTotal }));
+    };
+
+    const handleSaveOpeningKm = async () => {
+        if (!openingKmInput) { toast('Please enter Opening KM.', 'error'); return; }
+        if (!tripDetails?.v_id) { toast('No vehicle found for this trip.', 'error'); return; }
+        setSavingOpeningKm(true);
+        try {
+            await api.post('/ontrip.php', {
+                action: 'save_opening_km',
+                v_id: tripDetails.v_id,
+                opening_km: openingKmInput,
+            });
+            toast('Opening KM saved successfully!');
+            // Refresh trip details so the saved KM shows
+            fetchTripDetails(tripDetails.b_id);
+            setOpeningKmInput('');
+        } catch (err) {
+            toast(err.response?.data?.message || 'Failed to save Opening KM.', 'error');
+        } finally {
+            setSavingOpeningKm(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -259,6 +286,18 @@ const calculateFare = () => {
 
                         {tripDetails && !loading && (
                             <form onSubmit={handleSubmit} style={{ animation: 'fadeIn 0.3s ease-out' }}>
+
+                                {/* Warning: no tariff found for this vehicle type */}
+                                {(parseFloat(tripDetails.kmnonac) === 0 && parseFloat(tripDetails.kmac) === 0) && (
+                                    <div style={{ background: '#fffbeb', border: '1px solid #fbbf24', borderRadius: 8, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <span className="material-icons" style={{ color: '#d97706', fontSize: 20 }}>warning</span>
+                                        <span style={{ fontSize: 13, fontWeight: 600, color: '#92400e' }}>
+                                            No per-km tariff found for vehicle <strong>"{tripDetails.matched_vehicle || tripDetails.v_type}"</strong>.
+                                            Please add it in <strong>Settings → Vehicle Tariff</strong> to get correct fare.
+                                        </span>
+                                    </div>
+                                )}
+
                                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '20px 24px', marginBottom: 32, display: 'flex', flexWrap: 'wrap', gap: 40 }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                         <div><span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginRight: 8 }}>Booking ID:</span> <span style={{ fontSize: 14, fontWeight: 800, color: '#023149' }}>#{tripDetails.b_id}</span></div>
@@ -276,13 +315,47 @@ const calculateFare = () => {
                                     <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 800, color: '#023149', borderBottom: '1px solid #fdf6e8', paddingBottom: 12 }}>
                                         Mileage Details
                                     </h3>
-                                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                                        <div className="form-field">
+                                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+
+                                        {/* Opening KM — editable with Save */}
+                                        <div className="form-field" style={{ gridColumn: tripDetails.open_km ? 'span 1' : 'span 2' }}>
                                             <label>Opening KM</label>
-                                            <div style={{ height: 42, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#023149', fontWeight: 700, borderRadius: 8, padding: '0 16px', display: 'flex', alignItems: 'center' }}>
-                                                {tripDetails.open_km || 'Not Set'}
-                                            </div>
+                                            {tripDetails.open_km ? (
+                                                <div style={{ height: 42, background: '#f0fdf4', border: '1.5px solid #86efac', color: '#166534', fontWeight: 800, borderRadius: 8, padding: '0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <span className="material-icons" style={{ fontSize: 16, color: '#22c55e' }}>check_circle</span>
+                                                    {tripDetails.open_km} km
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        placeholder="Enter opening KM"
+                                                        value={openingKmInput}
+                                                        onChange={e => setOpeningKmInput(e.target.value)}
+                                                        style={{ fontWeight: 700, borderColor: '#e8d4aa', background: '#fffdf5' }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleSaveOpeningKm}
+                                                        disabled={savingOpeningKm || !openingKmInput}
+                                                        style={{
+                                                            flexShrink: 0, height: 42, padding: '0 16px',
+                                                            background: openingKmInput ? '#023149' : '#e2e8f0',
+                                                            color: openingKmInput ? '#fff' : '#94a3b8',
+                                                            border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13,
+                                                            cursor: openingKmInput ? 'pointer' : 'not-allowed',
+                                                            display: 'flex', alignItems: 'center', gap: 6,
+                                                            whiteSpace: 'nowrap'
+                                                        }}
+                                                    >
+                                                        <span className="material-icons" style={{ fontSize: 16 }}>save</span>
+                                                        {savingOpeningKm ? 'Saving...' : 'Save KM'}
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
+
                                         <div className="form-field">
                                             <label>Closing KM <span style={{ color: '#c5111a' }}>*</span></label>
                                             <input type="number" name="closing_km" value={formData.closing_km} onChange={handleInputChange} onBlur={calculateFare} required />
@@ -337,8 +410,14 @@ const calculateFare = () => {
                                     </div>
 
                                     <div style={{ display: 'flex', gap: 24, alignItems: 'flex-end' }}>
-                                        <div style={{ textAlign: 'right', background: '#f0fdf4', padding: '12px 24px', borderRadius: 8, border: '1px solid #bbf7d0', minWidth: 200, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                            <div style={{ fontSize: 12, fontWeight: 700, color: '#166534', textTransform: 'uppercase', marginBottom: 4 }}>Total System Fare</div>
+                                        <div style={{ textAlign: 'right', background: '#f0fdf4', padding: '12px 24px', borderRadius: 8, border: '1px solid #bbf7d0', minWidth: 220, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                                            <div style={{ fontSize: 12, fontWeight: 700, color: '#166534', textTransform: 'uppercase', marginBottom: 2 }}>Total System Fare</div>
+                                            {calculated.total_km > 0 && (
+                                                <>
+                                                    <div style={{ fontSize: 11, color: '#6b7280' }}>Base fare: <strong style={{ color: '#023149' }}>₹{calculated.base_fare}</strong></div>
+                                                    <div style={{ fontSize: 11, color: '#6b7280' }}>{calculated.total_km} km × ₹{calculated.rate_per_km} = <strong style={{ color: '#023149' }}>₹{calculated.km_charge?.toFixed(0)}</strong></div>
+                                                </>
+                                            )}
                                             <div style={{ fontSize: 24, fontWeight: 900, color: '#15803d' }}>₹ {calculated.net_total}</div>
                                         </div>
                                         <div className="form-field" style={{ margin: 0, width: 220 }}>

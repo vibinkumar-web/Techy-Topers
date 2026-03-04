@@ -6,41 +6,67 @@ $database = new Database();
 $pdo = $database->getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Ensure required tables exist
+$pdo->exec("CREATE TABLE IF NOT EXISTS finance_ledger (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(20) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    description TEXT,
+    recorded_by VARCHAR(100),
+    v_id VARCHAR(55),
+    b_id VARCHAR(55),
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
+
+$pdo->exec("CREATE TABLE IF NOT EXISTS driver_balances (
+    v_id VARCHAR(55) PRIMARY KEY,
+    balance DECIMAL(10,2) DEFAULT 0,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)");
+
 switch ($method) {
     case 'GET':
         if (isset($_GET['action'])) {
             $action = $_GET['action'];
-            
+
+            // Build shared date filter
+            $conditions = [];
+            $params = [];
+            if (!empty($_GET['from'])) {
+                $conditions[] = "DATE_FORMAT(transaction_date, '%Y-%m') >= ?";
+                $params[] = $_GET['from'];
+            }
+            if (!empty($_GET['to'])) {
+                $conditions[] = "DATE_FORMAT(transaction_date, '%Y-%m') <= ?";
+                $params[] = $_GET['to'];
+            }
+            $where = count($conditions) > 0 ? 'WHERE ' . implode(' AND ', $conditions) : '';
+
             if ($action === 'summary') {
-                // Get totals for dashboard cards
-                $summaryStmt = $pdo->query("SELECT 
-                    SUM(CASE WHEN type='income' THEN amount ELSE 0 END) as total_income,
-                    SUM(CASE WHEN type='expense' THEN amount ELSE 0 END) as total_expense,
-                    SUM(CASE WHEN type='commission' THEN amount ELSE 0 END) as total_commission
-                    FROM finance_ledger");
-                
-                $summary = $summaryStmt->fetch(PDO::FETCH_ASSOC);
-                $summary['net_profit'] = ($summary['total_income'] + $summary['total_commission']) - $summary['total_expense'];
+                $sql = "SELECT
+                    COALESCE(SUM(CASE WHEN type IN ('income','commission') THEN amount ELSE 0 END), 0) as total_income,
+                    COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense
+                    FROM finance_ledger $where";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                $summary = $stmt->fetch(PDO::FETCH_ASSOC);
+                $summary['net_balance'] = floatval($summary['total_income']) - floatval($summary['total_expense']);
                 echo json_encode(["status" => "success", "data" => $summary]);
-            } 
+            }
             else if ($action === 'ledger') {
-                // Get all ledger transactions
-                $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
-                $stmt = $pdo->query("SELECT * FROM finance_ledger ORDER BY id DESC LIMIT $limit");
+                $sql = "SELECT * FROM finance_ledger $where ORDER BY transaction_date DESC, id DESC";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
                 echo json_encode(["status" => "success", "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
             }
             else if ($action === 'driver_balances') {
-                // Get running driver balances with driver details
                 $stmt = $pdo->query("
-                    SELECT db.v_id, db.balance, db.last_updated, v.d_name, v.d_mobile, v.v_no 
-                    FROM driver_balances db 
+                    SELECT db.v_id, db.balance, db.last_updated, v.d_name, v.d_mobile, v.v_no
+                    FROM driver_balances db
                     LEFT JOIN f_v_attach v ON db.v_id = v.v_id OR db.v_id = v.v_no
                     ORDER BY db.last_updated DESC
                 ");
-                echo json_encode(["status" => "success", "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
-            }
-            else if ($action === 'categories') {
-                $stmt = $pdo->query("SELECT * FROM finance_categories ORDER BY type, name");
                 echo json_encode(["status" => "success", "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
             }
         }
@@ -48,76 +74,84 @@ switch ($method) {
 
     case 'POST':
         $data = json_decode(file_get_contents("php://input"), true);
-        
+
         if (isset($data['action'])) {
-            
+
+            // 1. Add any transaction
             if ($data['action'] === 'add_transaction' && isset($data['type'], $data['amount'], $data['category'])) {
                 $stmt = $pdo->prepare("INSERT INTO finance_ledger (type, category, amount, description, recorded_by, v_id, b_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $success = $stmt->execute([
-                    $data['type'], 
-                    $data['category'], 
-                    $data['amount'], 
-                    $data['description'] ?? '', 
+                    $data['type'],
+                    $data['category'],
+                    $data['amount'],
+                    $data['description'] ?? '',
                     $data['recorded_by'] ?? 'Admin',
                     $data['v_id'] ?? null,
                     $data['b_id'] ?? null
                 ]);
-                
                 if ($success) echo json_encode(["status" => "success", "message" => "Transaction recorded."]);
-                else echo json_encode(["status" => "error", "message" => "Failed to record transaction."]);
+                else { http_response_code(500); echo json_encode(["status" => "error", "message" => "Failed to record transaction."]); }
             }
-            
-            // 2. Automated Trip Commission Deduction
-            // Takes money out of driver balance, puts it into Ledger as Office Commission Income
+
+            // 2. Automated Trip Commission
             else if ($data['action'] === 'process_commission' && isset($data['v_id'], $data['amount'])) {
                 try {
                     $pdo->beginTransaction();
-                    
-                    // a) Insert into Ledger
                     $desc = !empty($data['description']) ? $data['description'] : "Auto-commission for trip " . ($data['b_id'] ?? 'unknown');
                     $ledStmt = $pdo->prepare("INSERT INTO finance_ledger (type, category, amount, b_id, v_id, description) VALUES ('commission', 'Trip Commission', ?, ?, ?, ?)");
                     $ledStmt->execute([$data['amount'], $data['b_id'] ?? null, $data['v_id'], $desc]);
-                    
-                    // b) Update Driver Balance (If balancing system works where positive means driver owes office)
-                    // If the office earned commission, the driver's balance drops (or increases if treating as debt). 
-                    // Let's treat balance as "Amount driver owes Office". So commission INCREASES what driver owes.
                     $balStmt = $pdo->prepare("INSERT INTO driver_balances (v_id, balance) VALUES (?, ?) ON DUPLICATE KEY UPDATE balance = balance + ?");
                     $balStmt->execute([$data['v_id'], $data['amount'], $data['amount']]);
-                    
                     $pdo->commit();
                     echo json_encode(["status" => "success", "message" => "Commission successfully processed."]);
                 } catch (Exception $e) {
                     $pdo->rollBack();
                     http_response_code(500);
-                    echo json_encode(["status" => "error", "message" => "Failed to process commission: " . $e->getMessage()]);
+                    echo json_encode(["status" => "error", "message" => "Failed: " . $e->getMessage()]);
                 }
             }
-            
-            // 3. Driver Payment Settlement
-            // When a driver physically hands cash to the office to settle their owes.
+
+            // 3. Driver Balance Settlement
             else if ($data['action'] === 'settle_balance' && isset($data['v_id'], $data['amount'])) {
-                 try {
+                try {
                     $pdo->beginTransaction();
-                    
-                    // a) Insert into Ledger as Income
-                    $ledStmt = $pdo->prepare("INSERT INTO finance_ledger (type, category, amount, v_id, description) VALUES ('income', 'Driver Settlement', ?, ?, 'Cash received from driver to settle balance.')");
+                    $ledStmt = $pdo->prepare("INSERT INTO finance_ledger (type, category, amount, v_id, description) VALUES ('income', 'Driver Settlement', ?, ?, 'Cash received from driver.')");
                     $ledStmt->execute([$data['amount'], $data['v_id']]);
-                    
-                    // b) Decrease driver balance debt
                     $balStmt = $pdo->prepare("UPDATE driver_balances SET balance = balance - ? WHERE v_id = ?");
                     $balStmt->execute([$data['amount'], $data['v_id']]);
-                    
                     $pdo->commit();
                     echo json_encode(["status" => "success", "message" => "Driver balance settled."]);
                 } catch (Exception $e) {
                     $pdo->rollBack();
                     http_response_code(500);
-                    echo json_encode(["status" => "error", "message" => "Failed to settle: " . $e->getMessage()]);
+                    echo json_encode(["status" => "error", "message" => "Failed: " . $e->getMessage()]);
                 }
             }
+
+            // 4. Delete transaction
+            else if ($data['action'] === 'delete_transaction' && isset($data['id'])) {
+                $stmt = $pdo->prepare("DELETE FROM finance_ledger WHERE id = ?");
+                $success = $stmt->execute([$data['id']]);
+                if ($success) echo json_encode(["status" => "success", "message" => "Transaction deleted."]);
+                else { http_response_code(500); echo json_encode(["status" => "error", "message" => "Failed to delete."]); }
+            }
+
+            // 5. Update transaction
+            else if ($data['action'] === 'update_transaction' && isset($data['id'], $data['amount'])) {
+                $stmt = $pdo->prepare("UPDATE finance_ledger SET amount = ?, description = ?, category = ? WHERE id = ?");
+                $success = $stmt->execute([
+                    $data['amount'],
+                    $data['description'] ?? '',
+                    $data['category'] ?? '',
+                    $data['id']
+                ]);
+                if ($success) echo json_encode(["status" => "success", "message" => "Transaction updated."]);
+                else { http_response_code(500); echo json_encode(["status" => "error", "message" => "Failed to update."]); }
+            }
+
             else {
                 http_response_code(400);
-                echo json_encode(["status" => "error", "message" => "Invalid POST action or missing fields."]);
+                echo json_encode(["status" => "error", "message" => "Invalid action or missing fields."]);
             }
         }
         break;

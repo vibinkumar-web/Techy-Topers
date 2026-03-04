@@ -1,18 +1,14 @@
 import { useState, useEffect, useContext } from 'react';
 import { useToast } from '../context/ToastContext';
-
-        
-
-        
-
 import AuthContext from '../context/AuthContext';
+
 const LocalTripClosing = () => {
     const toast = useToast();
-const { api, user } = useContext(AuthContext);
+    const { api, user } = useContext(AuthContext);
     const [vehicles, setVehicles] = useState([]);
     const [selectedVid, setSelectedVid] = useState('');
     const [tripData, setTripData] = useState(null);
-    const [tariffs, setTariffs] = useState([]);
+    const [calcBreakdown, setCalcBreakdown] = useState(null);
     const [formData, setFormData] = useState({
         closing_km: '',
         paid_amount: '',
@@ -25,9 +21,19 @@ const { api, user } = useContext(AuthContext);
         net_total: 0
     });
 
+    const [baseFareConfig, setBaseFareConfig] = useState(190);
+
     useEffect(() => {
         fetchVehicles();
-        fetchTariffs();
+        const fetchBaseFareConfig = async () => {
+            try {
+                const res = await api.get('/settings.php?config=base_fare');
+                setBaseFareConfig(res.data.base_fare ?? 190);
+            } catch (e) {
+                console.error('Failed to load base fare config', e);
+            }
+        };
+        fetchBaseFareConfig();
     }, []);
 
     const fetchVehicles = async () => {
@@ -36,15 +42,6 @@ const { api, user } = useContext(AuthContext);
             setVehicles(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error("Error fetching vehicles", error);
-        }
-    };
-
-    const fetchTariffs = async () => {
-        try {
-            const response = await api.get('/local_trip_closing.php?action=tariffs');
-            setTariffs(Array.isArray(response.data) ? response.data : []);
-        } catch (error) {
-            console.error("Error fetching tariffs", error);
         }
     };
 
@@ -65,10 +62,34 @@ const { api, user } = useContext(AuthContext);
         }
     };
 
-    
-        
-const calculateNetTotal = () => {
-        return parseFloat(formData.net_total || 0);
+
+
+    const calculateNetTotal = () => {
+        if (!tripData) return;
+
+        const BASE_FARE = baseFareConfig;
+        const openKm = parseFloat(tripData.open_km) || 0;
+        const closeKm = parseFloat(formData.closing_km) || 0;
+
+        if (closeKm <= 0) return;
+
+        if (closeKm < openKm) {
+            toast(`Closing KM (${closeKm}) must be greater than Opening KM (${openKm}).`, 'error');
+            setCalcBreakdown(null);
+            return;
+        }
+
+        const totalKm = closeKm - openKm;
+
+        // Use rate directly from backend (joined from enquery_tariff)
+        const isAc = String(formData.ac_type) === '1';
+        const ratePerKm = isAc ? parseFloat(tripData.kmac) || 0 : parseFloat(tripData.kmnonac) || 0;
+
+        const kmCharge = totalKm * ratePerKm;
+        const net = BASE_FARE + kmCharge + parseFloat(formData.other_charge || 0) - parseFloat(formData.discount || 0);
+
+        setCalcBreakdown({ totalKm, ratePerKm, kmCharge, baseFare: BASE_FARE, net });
+        setFormData(prev => ({ ...prev, net_total: net, paid_amount: net }));
     };
 
     const handleSubmit = async (e) => {
@@ -183,6 +204,18 @@ const calculateNetTotal = () => {
 
                         {tripData && (
                             <form onSubmit={handleSubmit} style={{ animation: 'fadeIn 0.3s ease-out' }}>
+
+                                {/* Warning: no tariff found for this vehicle type */}
+                                {(parseFloat(tripData.kmnonac) === 0 && parseFloat(tripData.kmac) === 0) && (
+                                    <div style={{ background: '#fffbeb', border: '1px solid #fbbf24', borderRadius: 8, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <span className="material-icons" style={{ color: '#d97706', fontSize: 20 }}>warning</span>
+                                        <span style={{ fontSize: 13, fontWeight: 600, color: '#92400e' }}>
+                                            No per-km tariff found for vehicle <strong>"{tripData.matched_vehicle || tripData.v_type}"</strong>.
+                                            Please add it in <strong>Settings → Vehicle Tariff</strong> to get correct fare.
+                                        </span>
+                                    </div>
+                                )}
+
                                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: 24, marginBottom: 40, position: 'relative', overflow: 'hidden' }}>
                                     <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 4, background: '#023149' }} />
 
@@ -215,7 +248,7 @@ const calculateNetTotal = () => {
                                     Manual Override Parameters
                                 </h3>
 
-                                <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: 40 }}>
+                                <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: 24 }}>
                                     <div className="form-field" style={{ margin: 0 }}>
                                         <label>Final Closing Odometer <span style={{ color: '#c5111a' }}>*</span></label>
                                         <input type="number" value={formData.closing_km} onChange={e => setFormData({ ...formData, closing_km: e.target.value })} required style={{ fontWeight: 600 }} />
@@ -235,7 +268,37 @@ const calculateNetTotal = () => {
                                         <label>Aggregate Incidentals (₹)</label>
                                         <input type="number" value={formData.other_charge} onChange={e => setFormData({ ...formData, other_charge: e.target.value })} min="0" />
                                     </div>
+                                    <div className="form-field" style={{ margin: 0 }}>
+                                        <label>Discount (₹)</label>
+                                        <input type="number" value={formData.discount} onChange={e => setFormData({ ...formData, discount: e.target.value })} min="0" />
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                                        <button type="button" onClick={calculateNetTotal}
+                                            style={{ height: 42, padding: '0 20px', background: '#023149', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, width: '100%', justifyContent: 'center' }}
+                                        >
+                                            <span className="material-icons" style={{ fontSize: 18 }}>calculate</span>
+                                            Calculate Fare
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {calcBreakdown && (
+                                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 20px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center' }}>
+                                        <div>
+                                            <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase' }}>Base Fare</div>
+                                            <div style={{ fontSize: 16, fontWeight: 800, color: '#023149' }}>₹{calcBreakdown.baseFare}</div>
+                                        </div>
+                                        <div style={{ color: '#94a3b8', fontWeight: 700 }}>+</div>
+                                        <div>
+                                            <div style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase' }}>Distance Charge</div>
+                                            <div style={{ fontSize: 16, fontWeight: 800, color: '#023149' }}>{calcBreakdown.totalKm} km × ₹{calcBreakdown.ratePerKm} = ₹{calcBreakdown.kmCharge.toFixed(0)}</div>
+                                        </div>
+                                        <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                                            <div style={{ fontSize: 11, fontWeight: 700, color: '#166534', textTransform: 'uppercase' }}>Calculated Total</div>
+                                            <div style={{ fontSize: 22, fontWeight: 900, color: '#15803d' }}>₹{calcBreakdown.net.toFixed(0)}</div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div style={{ borderTop: '2px solid #fdf6e8', paddingTop: 32, display: 'flex', justifyContent: 'flex-end', gap: 32, alignItems: 'flex-end' }}>
                                     <div className="form-field" style={{ margin: 0, width: 220 }}>

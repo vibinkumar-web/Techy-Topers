@@ -51,58 +51,86 @@ const AdvanceBookings = () => {
                 </div>
             </div>
 
-            <div className="page-body" style={{ padding: '0 !important' }}>
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ margin: 0, fontSize: 11, borderSpacing: 0, width: '100%', minWidth: 1500 }}>
-                        <thead style={{ background: '#0062ff', color: '#fff' }}>
-                            <tr>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>B-ID</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Status</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Call-Time</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Pick-up Date Time</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Pickup Place</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Drop Place</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Trip Type</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>V-Type</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>V-ID</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Driver No</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Booking Name</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Contact No</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>By</th>
-                                <th style={{ whiteSpace: 'nowrap', padding: '12px 16px', fontWeight: 600 }}>Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody style={{ background: '#e2e8f0', color: '#334155', fontWeight: 600 }}>
-                            {Array.isArray(bookings) && bookings.length > 0 ? (
-                                bookings.map((b) => {
-                                    return (
-                                        <tr key={b.b_id || Math.random()}>
-                                            <td style={{ padding: '12px 16px' }}>{b.b_id}</td>
-                                            <td style={{ padding: '12px 16px' }}>Pending</td>
-                                            <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>{b.b_date}</td>
-                                            <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>{b.pickup}</td>
-                                            <td style={{ padding: '12px 16px' }}>{b.p_city || b.pickup_place}</td>
-                                            <td style={{ padding: '12px 16px' }}>{b.d_place || b.drop_place}</td>
-                                            <td style={{ padding: '12px 16px' }}>{b.t_type || 'General'}</td>
-                                            <td style={{ padding: '12px 16px' }}>{b.v_types}</td>
-                                            <td style={{ padding: '12px 16px' }}>{b.q || '-'}</td>
-                                            <td style={{ padding: '12px 16px' }}>{b.d_mobile || '-'}</td>
-                                            <td style={{ padding: '12px 16px' }}>{b.cus_name}</td>
-                                            <td style={{ padding: '12px 16px' }}>{b.cus_mobile}</td>
-                                            <td style={{ padding: '12px 16px' }}>{b.r_status || 'Staff'}</td>
-                                            <td style={{ padding: '12px 16px' }}>{b.remarks || '-'}</td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
+            <div className="page-body" style={{ maxWidth: '100%', padding: '24px 24px 40px' }}>
+                <div className="section">
+                    {/* Table banner header — dark navy, matches every other page */}
+                    <div className="table-header">
+                        <span>Advance Bookings</span>
+                    </div>
+
+                    <div className="table-wrap" style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}>
+                        <table style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: 12 }}>
+                            <thead>
                                 <tr>
-                                    <td colSpan="14" style={{ textAlign: 'center', padding: '40px', color: '#6b7280', background: '#fff' }}>
-                                        No unassigned advance bookings over 24 hours out found.
-                                    </td>
+                                    {['B-ID', 'Status', 'Call-Time', 'Pick-up Date Time', 'Pickup Place', 'Drop Place', 'Trip Type', 'V-Type', 'V-ID', 'Driver No', 'Booking Name', 'Contact No', 'By', 'Remarks'].map((h) => (
+                                        <th key={h} style={{
+                                            padding: '10px 10px',
+                                            textAlign: 'left',
+                                            fontSize: 11,
+                                            fontWeight: 700,
+                                            textTransform: 'uppercase',
+                                            color: '#6b7280',
+                                            background: '#fdf6e8',
+                                            borderBottom: '1px solid #e8d4aa',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                        }}>{h}</th>
+                                    ))}
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {Array.isArray(bookings) && bookings.length > 0 ? (
+                                    bookings.map((b, idx) => (
+                                        <tr key={b.b_id || idx}
+                                            style={{ background: idx % 2 === 0 ? '#fff' : '#fdf6e8' }}
+                                            onMouseEnter={e => e.currentTarget.style.background = '#faefd2'}
+                                            onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? '#fff' : '#fdf6e8'}
+                                        >
+                                            {[
+                                                b.b_id,
+                                                'Pending',
+                                                b.b_date,
+                                                b.pickup,
+                                                b.p_city || b.pickup_place || '-',
+                                                b.d_place || b.drop_place || '-',
+                                                b.t_type || 'General',
+                                                b.v_types || '-',
+                                                b.q || '-',
+                                                b.d_mobile || '-',
+                                                b.cus_name || '-',
+                                                b.cus_mobile || '-',
+                                                b.r_status || 'Staff',
+                                                b.remarks || '-',
+                                            ].map((val, ci) => (
+                                                <td key={ci} title={String(val ?? '')} style={{
+                                                    padding: '10px 10px',
+                                                    color: '#1f2933',
+                                                    fontWeight: 500,
+                                                    borderBottom: '1px solid #f5ede0',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                    maxWidth: 0,
+                                                }}>{val}</td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="14" style={{
+                                            textAlign: 'center',
+                                            padding: '50px 20px',
+                                            color: '#6b7280',
+                                            fontWeight: 500,
+                                        }}>
+                                            No unassigned advance bookings over 24 hours out found.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

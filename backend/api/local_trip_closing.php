@@ -6,22 +6,42 @@ $pdo = $database->getConnection();
 
 header("Content-Type: application/json");
 
+// Ensure app_config table exists
+$pdo->exec("CREATE TABLE IF NOT EXISTS app_config (
+    config_key VARCHAR(100) PRIMARY KEY,
+    config_value VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)");
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
         if (isset($_GET['v_id'])) {
-            // Fetch trip details for a specific vehicle (similar to legacy local_trip.php logic)
             $v_id = $_GET['v_id'];
-            $sql = "SELECT * FROM f_ontrip WHERE v_id = ? AND already_assign = '1'";
+            $sql = "SELECT f.*,
+                        COALESCE(fva.v_model, f.v_type) as matched_vehicle,
+                        COALESCE(et.kmnonac, 0) as kmnonac,
+                        COALESCE(et.kmac, 0) as kmac,
+                        COALESCE(ac.config_value, '190') as base_fare
+                    FROM f_ontrip f
+                    LEFT JOIN f_v_attach fva ON fva.v_id = f.v_id
+                    LEFT JOIN enquery_tariff et ON et.id = (
+                        SELECT id FROM enquery_tariff
+                        WHERE LOWER(TRIM(name)) LIKE CONCAT(LOWER(TRIM(COALESCE(fva.v_model, f.v_type))), '%')
+                           OR LOWER(TRIM(COALESCE(fva.v_model, f.v_type))) LIKE CONCAT(LOWER(TRIM(name)), '%')
+                        ORDER BY
+                          CASE WHEN LOWER(TRIM(name)) LIKE CONCAT(LOWER(TRIM(COALESCE(fva.v_model, f.v_type))), '%') THEN 0 ELSE 1 END,
+                          LENGTH(name) ASC
+                        LIMIT 1
+                    )
+                    LEFT JOIN app_config ac ON ac.config_key = 'base_fare'
+                    WHERE f.v_id = ? AND f.already_assign = '1'";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([$v_id]);
             $trip = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if ($trip) {
-                // Fetch local tariff details if vehicle type matches
-                // Legacy code fetched from 'local_tariff' where v_name = trip's v_type logic
-                // For simplicity, we return the trip and let frontend/user handle specifics or fetch tariff if needed
                 echo json_encode($trip);
             } else {
                  echo json_encode(null);

@@ -16,9 +16,41 @@ const VehicleTariffSettings = () => {
     const [isAdding, setIsAdding] = useState(false);
     const [newVehicle, setNewVehicle] = useState({ v_name: '', kmnonac: '', kmac: '' });
 
+    // Base Fare state
+    const [baseFare, setBaseFare] = useState(190);
+    const [baseFareEdit, setBaseFareEdit] = useState('');
+    const [editingBaseFare, setEditingBaseFare] = useState(false);
+    const [savingBaseFare, setSavingBaseFare] = useState(false);
+
     useEffect(() => {
         fetchPrices();
+        fetchBaseFare();
     }, []);
+
+    const fetchBaseFare = async () => {
+        try {
+            const res = await api.get('/settings.php?config=base_fare');
+            setBaseFare(res.data.base_fare ?? 190);
+        } catch (e) {
+            console.error('Failed to load base fare', e);
+        }
+    };
+
+    const handleSaveBaseFare = async () => {
+        const val = parseFloat(baseFareEdit);
+        if (!val || val <= 0) { toast('Please enter a valid base fare amount.', 'error'); return; }
+        setSavingBaseFare(true);
+        try {
+            await api.post('/settings.php', { action: 'save_base_fare', base_fare: val });
+            setBaseFare(val);
+            setEditingBaseFare(false);
+            toast('Base fare updated successfully!');
+        } catch (e) {
+            toast('Failed to save base fare.', 'error');
+        } finally {
+            setSavingBaseFare(false);
+        }
+    };
 
     const fetchPrices = async () => {
         setLoading(true);

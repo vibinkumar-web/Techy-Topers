@@ -18,6 +18,10 @@ const OnTrip = () => {
     const [closingTrip, setClosingTrip] = useState(false);
     const [msg, setMsg] = useState({ text: '', type: '' });
 
+    // Per-row KM inputs (keyed by b_id)
+    const [rowKmInputs, setRowKmInputs] = useState({});
+    const [rowSaving, setRowSaving] = useState({});
+
     useEffect(() => {
         if (vehicleId) {
             const matched = trips.find(t => String(t.v_id) === String(vehicleId));
@@ -79,6 +83,26 @@ const OnTrip = () => {
             navigate(`/localtrip/${trip.v_id}`);
         } else {
             navigate(`/trip-closing`, { state: { booking: trip } });
+        }
+    };
+
+    const handleRowSaveKm = async (trip) => {
+        const km = rowKmInputs[trip.b_id];
+        if (!km) { showMsg('Please enter Opening KM for this trip.', 'error'); return; }
+        setRowSaving(prev => ({ ...prev, [trip.b_id]: true }));
+        try {
+            await api.post('/ontrip.php', {
+                action: 'save_opening_km',
+                v_id: trip.v_id,
+                opening_km: km,
+            });
+            showMsg(`Opening KM saved for vehicle ${trip.v_id}!`, 'success');
+            setRowKmInputs(prev => ({ ...prev, [trip.b_id]: '' }));
+            fetchTrips();
+        } catch (e) {
+            showMsg(e.response?.data?.message || 'Failed to save Opening KM.', 'error');
+        } finally {
+            setRowSaving(prev => ({ ...prev, [trip.b_id]: false }));
         }
     };
 
@@ -301,10 +325,31 @@ const OnTrip = () => {
                                                         {trip.open_km} <span style={{ fontSize: 10, opacity: 0.8 }}>KM</span>
                                                     </div>
                                                 ) : (
-                                                    <span style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                                                        <span className="material-icons" style={{ fontSize: 14 }}>warning_amber</span>
-                                                        Pending
-                                                    </span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                                                        <div style={{ position: 'relative' }}>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                placeholder="Enter KM"
+                                                                value={rowKmInputs[trip.b_id] || ''}
+                                                                onChange={e => setRowKmInputs(prev => ({ ...prev, [trip.b_id]: e.target.value }))}
+                                                                style={{ width: 100, height: 32, padding: '0 8px', fontSize: 13, fontWeight: 700, border: '1.5px solid #e8d4aa', borderRadius: 6, outline: 'none', background: '#fffdf5' }}
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleRowSaveKm(trip)}
+                                                            disabled={rowSaving[trip.b_id] || !rowKmInputs[trip.b_id]}
+                                                            style={{
+                                                                height: 32, padding: '0 10px', background: rowKmInputs[trip.b_id] ? '#023149' : '#e2e8f0',
+                                                                color: rowKmInputs[trip.b_id] ? '#fff' : '#94a3b8',
+                                                                border: 'none', borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: rowKmInputs[trip.b_id] ? 'pointer' : 'not-allowed',
+                                                                display: 'flex', alignItems: 'center', gap: 4, transition: 'background 0.15s'
+                                                            }}
+                                                        >
+                                                            <span className="material-icons" style={{ fontSize: 14 }}>save</span>
+                                                            {rowSaving[trip.b_id] ? '...' : 'Save'}
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </td>
                                             <td style={{ textAlign: 'center' }}>

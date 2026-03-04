@@ -8,15 +8,39 @@ $db = $database->getConnection();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Ensure app_config table exists
+$db->exec("CREATE TABLE IF NOT EXISTS app_config (
+    config_key VARCHAR(100) PRIMARY KEY,
+    config_value VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)");
+
 if ($method === 'GET') {
     // Fetch trip details by b_id
     if(isset($_GET['b_id'])) {
         $b_id = $_GET['b_id'];
-        $query = "SELECT * FROM f_ontrip WHERE b_id = :b_id"; // Fetch from f_ontrip
+        $query = "SELECT f.*,
+                    COALESCE(fva.v_model, f.v_type) as matched_vehicle,
+                    COALESCE(et.kmnonac, 0) as kmnonac,
+                    COALESCE(et.kmac, 0) as kmac,
+                    COALESCE(ac.config_value, '190') as base_fare
+                  FROM f_ontrip f
+                  LEFT JOIN f_v_attach fva ON fva.v_id = f.v_id
+                  LEFT JOIN enquery_tariff et ON et.id = (
+                      SELECT id FROM enquery_tariff
+                      WHERE LOWER(TRIM(name)) LIKE CONCAT(LOWER(TRIM(COALESCE(fva.v_model, f.v_type))), '%')
+                         OR LOWER(TRIM(COALESCE(fva.v_model, f.v_type))) LIKE CONCAT(LOWER(TRIM(name)), '%')
+                      ORDER BY
+                        CASE WHEN LOWER(TRIM(name)) LIKE CONCAT(LOWER(TRIM(COALESCE(fva.v_model, f.v_type))), '%') THEN 0 ELSE 1 END,
+                        LENGTH(name) ASC
+                      LIMIT 1
+                  )
+                  LEFT JOIN app_config ac ON ac.config_key = 'base_fare'
+                  WHERE f.b_id = :b_id";
         $stmt = $db->prepare($query);
         $stmt->bindParam(":b_id", $b_id);
         $stmt->execute();
-        
+
         if($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             echo json_encode($row);
         } else {
