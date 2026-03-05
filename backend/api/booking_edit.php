@@ -21,12 +21,11 @@ if (!isset($data->b_id)) {
 }
 
 // Update f_ft_booking
-$query = "UPDATE f_ft_booking SET 
-            cus_name = :cus_name,
-            cus_mobile = :cus_mobile,
+$query = "UPDATE f_ft_booking SET
+            b_name = :cus_name,
+            m_no = :cus_mobile,
             pickup = :pickup,
-            pickup_time = :pickup_time,
-            drop_place = :drop_place,
+            d_place = :drop_place,
             v_types = :v_types,
             b_type = :b_type,
             ac_type = :ac_type,
@@ -38,7 +37,6 @@ $stmt = $db->prepare($query);
 $stmt->bindParam(":cus_name", $data->cus_name);
 $stmt->bindParam(":cus_mobile", $data->cus_mobile);
 $stmt->bindParam(":pickup", $data->pickup);
-$stmt->bindParam(":pickup_time", $data->pickup_time);
 $stmt->bindParam(":drop_place", $data->drop_place);
 $stmt->bindParam(":v_types", $data->v_types);
 $stmt->bindParam(":b_type", $data->b_type);

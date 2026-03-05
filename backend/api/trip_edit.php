@@ -52,7 +52,9 @@ $query = "UPDATE f_closing SET
 $stmt = $db->prepare($query);
 
 // Determine pending status
-$pending = ($data->net_total > $data->paid_amount) ? '1' : '0';
+$net_total  = isset($data->net_total)   ? (float)$data->net_total  : 0;
+$paid_amount = isset($data->paid_amount) ? (float)$data->paid_amount : 0;
+$pending = ($net_total > $paid_amount) ? '1' : '0';
 $p_date = date('Y-m-d'); // Update edit date to today? Or keep original? Legacy uses date('Y-m-d') on edit.
 $d_date = date('Y-m-d');
 
@@ -71,8 +73,8 @@ $stmt->bindParam(":d_place", $data->d_place);
 $stmt->bindParam(":rwards_point", $data->rwards_point);
 $stmt->bindParam(":package_name", $data->package_name);
 $stmt->bindParam(":other_charge", $data->other_charge);
-$stmt->bindParam(":net_total", $data->net_total);
-$stmt->bindParam(":paid_amount", $data->paid_amount);
+$stmt->bindParam(":net_total", $net_total);
+$stmt->bindParam(":paid_amount", $paid_amount);
 $stmt->bindParam(":discount", $data->discount);
 $stmt->bindParam(":dis_reason", $data->dis_reason);
 $stmt->bindParam(":to_whom", $data->to_whom);

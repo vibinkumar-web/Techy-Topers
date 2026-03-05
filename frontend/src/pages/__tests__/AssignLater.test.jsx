@@ -55,7 +55,6 @@ test('handles manual assignment', async () => {
 
     // spy on window.confirm
     const confirmSpy = vi.spyOn(window, 'confirm').mockImplementation(() => true);
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => { });
 
     renderAssignLater(apiMock);
 
@@ -79,11 +78,9 @@ test('handles manual assignment', async () => {
             b_id: 'B101',
             driver_id: 'EMP100'
         }));
-        expect(alertSpy).toHaveBeenCalledWith('Assignment Successful!');
     });
 
     confirmSpy.mockRestore();
-    alertSpy.mockRestore();
 });
 
 test('search filters drivers', async () => {

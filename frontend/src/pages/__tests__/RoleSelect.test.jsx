@@ -14,16 +14,14 @@ const renderRoleSelect = () => {
 test('renders role options', () => {
     renderRoleSelect();
 
-    expect(screen.getByText(/Select Your Role/i)).toBeInTheDocument();
-    expect(screen.getByText(/Customer/i)).toBeInTheDocument();
-    expect(screen.getByText(/Staff \/ Driver/i)).toBeInTheDocument();
-    expect(screen.getByText(/Administrator/i)).toBeInTheDocument();
+    expect(screen.getByText(/Systems Command Center/i)).toBeInTheDocument();
+    expect(screen.getByText(/Administrative Node/i)).toBeInTheDocument();
+    expect(screen.getByText(/Operational Node/i)).toBeInTheDocument();
 });
 
-test('has correct links for roles', () => {
+test('has correct login buttons for roles', () => {
     renderRoleSelect();
 
-    expect(screen.getByRole('link', { name: /customer/i })).toHaveAttribute('href', '/login');
-    expect(screen.getByRole('link', { name: /staff \/ driver/i })).toHaveAttribute('href', '/staff/login');
-    expect(screen.getByRole('link', { name: /administrator/i })).toHaveAttribute('href', '/admin/login');
+    expect(screen.getByRole('button', { name: /Initiate Admin Login/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Initiate Operator Login/i })).toBeInTheDocument();
 });

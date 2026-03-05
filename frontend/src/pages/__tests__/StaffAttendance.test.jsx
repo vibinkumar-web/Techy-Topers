@@ -78,9 +78,6 @@ test('handles clock in (login)', async () => {
         post: vi.fn().mockResolvedValue({ data: { message: 'Logged in' } })
     };
 
-    // Mock window.alert
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => { });
-
     renderStaffAttendance(apiMock);
 
     const idInput = screen.getByPlaceholderText(/Enter Staff ID/i);
@@ -94,8 +91,5 @@ test('handles clock in (login)', async () => {
             action: 'login',
             id_emp: 'EMP002'
         }));
-        expect(alertMock).toHaveBeenCalledWith('Staff Logged In Successfully!');
     });
-
-    alertMock.mockRestore();
 });

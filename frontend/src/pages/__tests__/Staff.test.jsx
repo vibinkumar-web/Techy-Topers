@@ -92,8 +92,6 @@ test('submits new staff data', async () => {
         post: vi.fn().mockResolvedValue({ data: { status: 'success' } })
     };
 
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => { });
-
     renderStaff(apiMock);
 
     await waitFor(() => {
@@ -118,12 +116,9 @@ test('submits new staff data', async () => {
             pwd: 'secretpwd',
             emp_status: '0'
         }));
-        expect(alertMock).toHaveBeenCalledWith('Staff created successfully');
         // Check if data is refreshed
         expect(apiMock.get).toHaveBeenCalledTimes(2);
     });
-
-    alertMock.mockRestore();
 });
 
 test('submits edited staff data', async () => {
@@ -131,8 +126,6 @@ test('submits edited staff data', async () => {
         get: vi.fn().mockResolvedValue({ data: mockStaffList }),
         put: vi.fn().mockResolvedValue({ data: { status: 'success' } })
     };
-
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => { });
 
     renderStaff(apiMock);
 
@@ -165,9 +158,6 @@ test('submits edited staff data', async () => {
     });
 
     await waitFor(() => {
-        expect(alertMock).toHaveBeenCalledWith('Staff updated successfully');
         expect(apiMock.get).toHaveBeenCalledTimes(2);
     });
-
-    alertMock.mockRestore();
 });

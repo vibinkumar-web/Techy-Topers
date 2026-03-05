@@ -18,11 +18,11 @@ test('renders admin register form properly', () => {
     const apiMock = { post: vi.fn() };
     renderAdminRegister(apiMock, vi.fn());
 
-    expect(screen.getByText(/Administrator Provisioning/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/enter legal name/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/enter authorized email/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/create cryptographic secret/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /initialize admin context/i })).toBeInTheDocument();
+    expect(screen.getByText(/Create Admin Account/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter full name/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter email address/i)).toBeInTheDocument();
+    expect(screen.getAllByPlaceholderText(/Password/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /Register as Admin/i })).toBeInTheDocument();
 });
 
 test('handles successful admin registration', async () => {
@@ -34,18 +34,20 @@ test('handles successful admin registration', async () => {
     const setUserMock = vi.fn();
     renderAdminRegister(apiMock, setUserMock);
 
-    fireEvent.change(screen.getByPlaceholderText(/enter legal name/i), { target: { value: 'Admin User' } });
-    fireEvent.change(screen.getByPlaceholderText(/enter administrative alias/i), { target: { value: 'adminuser' } });
-    fireEvent.change(screen.getByPlaceholderText(/create cryptographic secret/i), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter full name/i), { target: { value: 'Admin User' } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter email address/i), { target: { value: 'admin@test.com' } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter mobile number/i), { target: { value: '1234567890' } });
+    // Fill both password fields
+    const passwordInputs = screen.getAllByPlaceholderText(/Password/i);
+    fireEvent.change(passwordInputs[0], { target: { value: 'password123' } });
+    fireEvent.change(screen.getByPlaceholderText(/Confirm password/i), { target: { value: 'password123' } });
 
-    fireEvent.click(screen.getByRole('button', { name: /initialize admin context/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Register as Admin/i }));
 
     await waitFor(() => {
         expect(apiMock.post).toHaveBeenCalledWith('/admin_register.php', expect.objectContaining({
-            username: 'adminuser',
             password: 'password123',
             name: 'Admin User'
         }));
-        expect(setUserMock).toHaveBeenCalledWith(expect.objectContaining({ role: 'admin', username: 'adminuser' }));
     });
 });

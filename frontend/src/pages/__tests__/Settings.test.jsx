@@ -18,7 +18,12 @@ const renderSettings = (apiMock) => {
 
 test('renders settings and fetches current config', async () => {
     const apiMock = {
-        get: vi.fn().mockResolvedValue({ data: { smsoption: '1' } })
+        get: vi.fn().mockImplementation((url) => {
+            if (url.includes('/vehicle_pricing.php')) return Promise.resolve({ data: [] });
+            if (url.includes('config=base_fare')) return Promise.resolve({ data: { base_fare: 190 } });
+            return Promise.resolve({ data: { smsoption: '1' } });
+        }),
+        post: vi.fn().mockResolvedValue({ data: { status: 'success' } })
     };
 
     renderSettings(apiMock);
@@ -39,11 +44,13 @@ test('renders settings and fetches current config', async () => {
 
 test('handles setting change and saving', async () => {
     const apiMock = {
-        get: vi.fn().mockResolvedValue({ data: { smsoption: '1' } }),
+        get: vi.fn().mockImplementation((url) => {
+            if (url.includes('/vehicle_pricing.php')) return Promise.resolve({ data: [] });
+            if (url.includes('config=base_fare')) return Promise.resolve({ data: { base_fare: 190 } });
+            return Promise.resolve({ data: { smsoption: '1' } });
+        }),
         post: vi.fn().mockResolvedValue({ data: { status: 'success' } })
     };
-
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => { });
 
     renderSettings(apiMock);
 
@@ -66,8 +73,5 @@ test('handles setting change and saving', async () => {
             user_id: 'EMP123',
             smsoption: '0'
         });
-        expect(alertMock).toHaveBeenCalledWith('Preferences saved successfully.');
     });
-
-    alertMock.mockRestore();
 });

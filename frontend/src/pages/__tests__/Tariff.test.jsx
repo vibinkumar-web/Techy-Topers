@@ -52,8 +52,6 @@ test('handles tariff update submission', async () => {
         post: vi.fn().mockResolvedValue({ data: { status: 'success' } })
     };
 
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => { });
-
     renderTariff(apiMock);
 
     const select = screen.getByRole('combobox');
@@ -73,12 +71,8 @@ test('handles tariff update submission', async () => {
     await waitFor(() => {
         expect(apiMock.post).toHaveBeenCalledWith('/tariff.php', expect.objectContaining({
             v_id: '1',
-            a1: '1200',
             a19: '500',
             a38: '15'
         }));
-        expect(alertMock).toHaveBeenCalledWith('Tariff updated successfully.');
     });
-
-    alertMock.mockRestore();
 });

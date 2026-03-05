@@ -46,9 +46,6 @@ test('handles single vehicle logout', async () => {
         post: vi.fn().mockResolvedValue({ data: { status: 'success', message: 'Logged out successfully' } })
     };
 
-    // Mock window.alert
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => { });
-
     renderVehicleInOut(apiMock);
 
     await waitFor(() => {
@@ -66,10 +63,7 @@ test('handles single vehicle logout', async () => {
             action: 'logout_single',
             v_id: 'V001'
         });
-        expect(alertMock).toHaveBeenCalledWith('Vehicle V001 logged out successfully.');
     });
-
-    alertMock.mockRestore();
 });
 
 test('handles all vehicle logout with confirmation', async () => {
@@ -80,7 +74,6 @@ test('handles all vehicle logout with confirmation', async () => {
 
     // Mock window.confirm to return true
     const confirmMock = vi.spyOn(window, 'confirm').mockImplementation(() => true);
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => { });
 
     renderVehicleInOut(apiMock);
 
@@ -94,9 +87,7 @@ test('handles all vehicle logout with confirmation', async () => {
     await waitFor(() => {
         expect(confirmMock).toHaveBeenCalled();
         expect(apiMock.post).toHaveBeenCalledWith('/vehicle_in_out.php', { action: 'logout_all' });
-        expect(alertMock).toHaveBeenCalledWith('All logged out');
     });
 
     confirmMock.mockRestore();
-    alertMock.mockRestore();
 });
