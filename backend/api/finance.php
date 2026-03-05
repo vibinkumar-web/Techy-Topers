@@ -69,6 +69,90 @@ switch ($method) {
                 ");
                 echo json_encode(["status" => "success", "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
             }
+
+            // Vehicle Commission Summary: trip totals + 10% due + paid + pending
+            else if ($action === 'vehicle_commission' && !empty($_GET['v_id'])) {
+                $v_id = trim($_GET['v_id']);
+                // Default to current month if not provided
+                $month = !empty($_GET['month']) ? $_GET['month'] : date('Y-m');
+
+                // Check if this vehicle ID exists in f_v_attach OR has any record in f_closing
+                $checkStmt = $pdo->prepare("
+                    SELECT COUNT(*) as cnt FROM f_v_attach
+                    WHERE v_id = ? OR v_no = ?
+                ");
+                $checkStmt->execute([$v_id, $v_id]);
+                $existing = intval($checkStmt->fetch(PDO::FETCH_ASSOC)['cnt']);
+
+                if ($existing === 0) {
+                    // Also check f_closing as fallback (vehicle may exist there even if not in attach)
+                    $checkClosing = $pdo->prepare("SELECT COUNT(*) as cnt FROM f_closing WHERE v_id = ?");
+                    $checkClosing->execute([$v_id]);
+                    $existing = intval($checkClosing->fetch(PDO::FETCH_ASSOC)['cnt']);
+                }
+
+                if ($existing === 0) {
+                    echo json_encode([
+                        "status"        => "error",
+                        "vehicle_found" => false,
+                        "message"       => "No vehicle found with ID: $v_id"
+                    ]);
+                    break;
+                }
+
+                // Sum all closed trip net_total for this vehicle in the given month
+                $tripStmt = $pdo->prepare("
+                    SELECT
+                        COUNT(*) as trip_count,
+                        COALESCE(SUM(net_total), 0) as total_earnings
+                    FROM f_closing
+                    WHERE v_id = ?
+                      AND DATE_FORMAT(p_date, '%Y-%m') = ?
+                ");
+                $tripStmt->execute([$v_id, $month]);
+                $tripData = $tripStmt->fetch(PDO::FETCH_ASSOC);
+
+                $totalEarnings = floatval($tripData['total_earnings']);
+                $commissionDue = round($totalEarnings * 0.10, 2);
+
+                // Sum commissions already paid for this vehicle in the given month (from finance_ledger)
+                $paidStmt = $pdo->prepare("
+                    SELECT COALESCE(SUM(amount), 0) as commission_paid
+                    FROM finance_ledger
+                    WHERE type = 'commission'
+                      AND v_id = ?
+                      AND DATE_FORMAT(transaction_date, '%Y-%m') = ?
+                ");
+                $paidStmt->execute([$v_id, $month]);
+                $paidData = $paidStmt->fetch(PDO::FETCH_ASSOC);
+
+                $commissionPaid = floatval($paidData['commission_paid']);
+                $commissionPending = max(0, round($commissionDue - $commissionPaid, 2));
+
+                // Also fetch individual trips for this vehicle/month
+                $tripsListStmt = $pdo->prepare("
+                    SELECT b_id, p_date, picup_place, drop_place, net_total, paid_amount
+                    FROM f_closing
+                    WHERE v_id = ?
+                      AND DATE_FORMAT(p_date, '%Y-%m') = ?
+                    ORDER BY p_date DESC
+                ");
+                $tripsListStmt->execute([$v_id, $month]);
+                $trips = $tripsListStmt->fetchAll(PDO::FETCH_ASSOC);
+
+                echo json_encode([
+                    "status"             => "success",
+                    "vehicle_found"      => true,
+                    "v_id"               => $v_id,
+                    "month"              => $month,
+                    "trip_count"         => intval($tripData['trip_count']),
+                    "total_earnings"     => $totalEarnings,
+                    "commission_due"     => $commissionDue,
+                    "commission_paid"    => $commissionPaid,
+                    "commission_pending" => $commissionPending,
+                    "trips"              => $trips
+                ]);
+            }
         }
         break;
 
