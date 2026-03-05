@@ -4,31 +4,6 @@ import Bookings from '../Bookings';
 import AuthContext from '../../context/AuthContext';
 import { expect, test, vi } from 'vitest';
 
-const mockBookings = [
-    {
-        b_id: '101',
-        pickup: '2023-10-27 10:00:00',
-        p_city: 'City Center',
-        d_place: 'Airport',
-        b_name: 'Alice Smith',
-        m_no: '9876543210',
-        v_type: 'Sedan',
-        ac_type: '1',
-        assign: '0'
-    },
-    {
-        b_id: '102',
-        pickup: '2023-10-28 14:00:00',
-        p_city: 'North Station',
-        d_place: 'Hotel Grand',
-        b_name: 'Bob Johnson',
-        m_no: '5551234567',
-        v_type: 'SUV',
-        ac_type: '0',
-        assign: '1'
-    }
-];
-
 const mockUser = { emp_id: 'EMP001', name: 'Test User' };
 
 const renderBookings = (apiMock) => {
@@ -41,50 +16,46 @@ const renderBookings = (apiMock) => {
     );
 };
 
-test('renders loadings state initially then displays bookings', async () => {
-    const apiMock = {
-        get: vi.fn().mockResolvedValue({ data: mockBookings })
-    };
+test('renders booking registration form with title and buttons', () => {
+    const apiMock = { get: vi.fn().mockResolvedValue({ data: [] }), post: vi.fn() };
+    const { container } = renderBookings(apiMock);
 
-    renderBookings(apiMock);
-
-    expect(screen.getByText(/loading booking records/i)).toBeInTheDocument();
-
-    await waitFor(() => {
-        expect(screen.getByText(/Central Bookings Management/i)).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('#101')).toBeInTheDocument();
-    expect(screen.getByText('#102')).toBeInTheDocument();
-    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
-    expect(screen.getByText('Bob Johnson')).toBeInTheDocument();
+    expect(screen.getByText('Register New Booking')).toBeInTheDocument();
+    expect(screen.getByText(/fill in the details below/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /confirm & finalize booking/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /discard/i })).toBeInTheDocument();
+    // Inputs exist in the form
+    expect(container.querySelector('input[name="m_no"]')).toBeInTheDocument();
+    expect(container.querySelector('input[name="b_name"]')).toBeInTheDocument();
 });
 
-test('opens modal when clicking register new booking', async () => {
-    const apiMock = {
-        get: vi.fn().mockResolvedValue({ data: [] })
-    };
-
-    renderBookings(apiMock);
-
-    await waitFor(() => {
-        expect(screen.getByText(/Central Bookings Management/i)).toBeInTheDocument();
-    });
-
-    const newBookingBtn = screen.getByRole('button', { name: /register new booking/i });
-    fireEvent.click(newBookingBtn);
+test('renders form sections and key fields', () => {
+    const apiMock = { get: vi.fn().mockResolvedValue({ data: [] }), post: vi.fn() };
+    const { container } = renderBookings(apiMock);
 
     expect(screen.getByText('Customer Identity Profile')).toBeInTheDocument();
+    expect(screen.getByText('Route & Operational Dynamics')).toBeInTheDocument();
+    expect(container.querySelector('input[name="m_no"]')).toBeInTheDocument();
+    expect(container.querySelector('input[name="b_name"]')).toBeInTheDocument();
+    expect(container.querySelector('input[name="d_place"]')).toBeInTheDocument();
 });
 
-test('displays no bookings message when api returns empty', async () => {
+test('submits booking form and calls API with form data', async () => {
     const apiMock = {
-        get: vi.fn().mockResolvedValue({ data: [] })
+        get: vi.fn().mockResolvedValue({ data: [] }),
+        post: vi.fn().mockResolvedValue({ data: { message: 'Booking registered' } })
     };
+    const { container } = renderBookings(apiMock);
 
-    renderBookings(apiMock);
+    fireEvent.change(container.querySelector('input[name="m_no"]'), { target: { value: '9876543210' } });
+    fireEvent.change(container.querySelector('input[name="b_name"]'), { target: { value: 'Alice Smith' } });
+
+    fireEvent.submit(container.querySelector('form'));
 
     await waitFor(() => {
-        expect(screen.getByText(/no active bookings currently registered/i)).toBeInTheDocument();
+        expect(apiMock.post).toHaveBeenCalledWith('/customers.php', expect.objectContaining({
+            m_no: '9876543210',
+            b_name: 'Alice Smith'
+        }));
     });
 });

@@ -6,7 +6,11 @@
     "setup-db": "powershell -ExecutionPolicy Bypass -File setup_db.ps1",
     "start-backend": "powershell -ExecutionPolicy Bypass -File start_backend.ps1",
     "start-frontend": "cd frontend && npm run dev",
-    "dev": "concurrently \"npm run start-backend\" \"npm run start-frontend\""
+    "dev": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
+    "test": "cd frontend && npx vitest run",
+    "test:watch": "cd frontend && npx vitest",
+    "test:backend": "php backend/run_tests.php",
+    "test:all": "concurrently --kill-others-on-fail \"npm run test\" \"npm run test:backend\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

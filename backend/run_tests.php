@@ -1033,6 +1033,345 @@ if ($r['status'] === 200 && $r['body'] !== null && !isset($r['body']['message'])
 }
 
 // ═════════════════════════════════════════════
+// 55. Malformed / Invalid JSON Body
+// ═════════════════════════════════════════════
+setGroup('Malformed JSON Handling');
+
+// Helper: send raw string body (not encoded JSON)
+function makeRawRequest(string $url, string $method, string $rawBody): array {
+    $options = [
+        'http' => [
+            'header'        => "Content-Type: application/json\r\nAccept: application/json\r\n",
+            'method'        => $method,
+            'content'       => $rawBody,
+            'ignore_errors' => true,
+            'timeout'       => 10,
+        ]
+    ];
+    $context = stream_context_create($options);
+    $result = @file_get_contents($url, false, $context);
+    if ($result === false) return ['status' => 0, 'body' => null, 'raw' => ''];
+    $statusLine = $http_response_header[0] ?? 'HTTP/1.1 000';
+    preg_match('{HTTP\/\S*\s(\d{3})}', $statusLine, $match);
+    return [
+        'status' => (int)($match[1] ?? 0),
+        'body'   => json_decode($result, true),
+        'raw'    => $result,
+    ];
+}
+
+// login.php with broken JSON
+$r = makeRawRequest("{$baseUrl}/login.php", 'POST', '{bad json here}');
+assertNotEqual(0, $r['status'], 'login.php with malformed JSON body does not crash (no 500)');
+assertNotEqual(500, $r['status'], 'login.php malformed JSON → not 500');
+
+// bookings.php POST with broken JSON
+$r = makeRawRequest("{$baseUrl}/bookings.php", 'POST', 'not json at all');
+assertNotEqual(500, $r['status'], 'bookings.php POST with garbage body → not 500');
+
+// customers.php POST with truncated JSON
+$r = makeRawRequest("{$baseUrl}/customers.php", 'POST', '{"b_name":"Test"');
+assertNotEqual(500, $r['status'], 'customers.php POST with truncated JSON → not 500');
+
+// register.php with empty string body
+$r = makeRawRequest("{$baseUrl}/register.php", 'POST', '');
+assertNotEqual(500, $r['status'], 'register.php POST with empty string body → not 500');
+
+// ═════════════════════════════════════════════
+// 56. Security: Boundary Inputs
+// ═════════════════════════════════════════════
+setGroup('Security – Boundary Inputs');
+
+// Very long username string (should not crash / 500)
+$longStr = str_repeat('A', 2000);
+$r = makeRequest("{$baseUrl}/login.php", 'POST', ['username' => $longStr, 'password' => 'test']);
+assertNotEqual(500, $r['status'], 'Login with 2000-char username → not 500');
+assertNotEqual(0, $r['status'], 'Login with 2000-char username endpoint reachable');
+
+// SQL injection-like payload in login username
+$r = makeRequest("{$baseUrl}/login.php", 'POST', ['username' => "' OR '1'='1", 'password' => "' OR '1'='1"]);
+assertNotEqual(500, $r['status'], 'Login with SQL injection payload → not 500 (PDO protects)');
+// Should be 401 (invalid creds) not 200
+assertNotEqual(200, $r['status'], 'Login SQL injection does NOT succeed → not 200');
+
+// XSS-like payload in booking name field
+$r = makeRequest("{$baseUrl}/customers.php", 'POST', [
+    'b_name' => '<script>alert("xss")</script>',
+    'm_no'   => '9999999990',
+]);
+assertNotEqual(500, $r['status'], 'POST customer with XSS payload in name → not 500');
+
+// NULL byte in query param
+$r = makeRequest("{$baseUrl}/vehicles.php?v_id=" . urlencode("V\x00ID"), 'GET');
+assertNotEqual(500, $r['status'], 'GET vehicles with null-byte v_id → not 500');
+
+// Negative number in tariff km
+$r = makeRequest("{$baseUrl}/enquery_tariff.php?km=-999", 'GET');
+assertNotEqual(500, $r['status'], 'GET enquery_tariff with negative km → not 500');
+
+// Very large km value
+$r = makeRequest("{$baseUrl}/enquery_tariff.php?km=9999999", 'GET');
+assertNotEqual(500, $r['status'], 'GET enquery_tariff with km=9999999 → not 500');
+
+// ═════════════════════════════════════════════
+// 57. Settings – Deep Coverage
+// ═════════════════════════════════════════════
+setGroup('Settings – Deep Coverage');
+
+// GET default (no user_id)
+$r = makeRequest("{$baseUrl}/settings.php", 'GET');
+assertStatus(200, $r, 'GET settings.php → 200');
+assertBodyKey('smsoption', $r, 'Settings default response has "smsoption" key');
+
+// GET base_fare config
+$r = makeRequest("{$baseUrl}/settings.php?config=base_fare", 'GET');
+assertStatus(200, $r, 'GET settings.php?config=base_fare → 200');
+assertBodyKey('base_fare', $r, 'Settings base_fare response has "base_fare" key');
+$baseFare = $r['body']['base_fare'] ?? null;
+assertEqual(true, is_numeric($baseFare), 'Settings base_fare is a numeric value');
+
+// GET with specific user_id
+$r = makeRequest("{$baseUrl}/settings.php?user_id=1", 'GET');
+assertStatus(200, $r, 'GET settings.php?user_id=1 → 200');
+assertBodyKey('smsoption', $r, 'Settings user_id=1 response has "smsoption" key');
+
+// POST: save_base_fare action
+$r = makeRequest("{$baseUrl}/settings.php", 'POST', ['action' => 'save_base_fare', 'base_fare' => 190]);
+assertStatus(200, $r, 'POST settings save_base_fare → 200');
+assertBodyKey('message', $r, 'POST settings save_base_fare has "message"');
+assertBodyKey('base_fare', $r, 'POST settings save_base_fare echoes back "base_fare"');
+
+// POST: missing smsoption → 400
+$r = makeRequest("{$baseUrl}/settings.php", 'POST', ['user_id' => '1']);
+assertStatus(400, $r, 'POST settings missing smsoption → 400');
+assertBodyKey('message', $r, 'POST settings missing smsoption has "message"');
+
+// POST: missing user_id → 400
+$r = makeRequest("{$baseUrl}/settings.php", 'POST', ['smsoption' => '1']);
+assertStatus(400, $r, 'POST settings missing user_id → 400');
+
+// ═════════════════════════════════════════════
+// 58. Finance – Extended Coverage
+// ═════════════════════════════════════════════
+setGroup('Finance – Extended Coverage');
+
+// GET summary with month filter
+$r = makeRequest("{$baseUrl}/finance.php?action=summary&from=2026-01&to=2026-03", 'GET');
+assertStatus(200, $r, 'GET finance summary with month filter → 200');
+assertBodyContains('status', 'success', $r, 'Finance summary with filter returns status=success');
+if (isset($r['body']['data'])) {
+    $data = $r['body']['data'];
+    assertEqual(true, array_key_exists('total_income', $data), 'Finance summary data has total_income');
+    assertEqual(true, array_key_exists('total_expense', $data), 'Finance summary data has total_expense');
+    assertEqual(true, array_key_exists('net_balance', $data), 'Finance summary data has net_balance');
+}
+
+// GET ledger with month filter
+$r = makeRequest("{$baseUrl}/finance.php?action=ledger&from=2026-01&to=2026-03", 'GET');
+assertStatus(200, $r, 'GET finance ledger with month filter → 200');
+assertBodyContains('status', 'success', $r, 'Finance ledger with filter returns status=success');
+
+// GET driver balances
+$r = makeRequest("{$baseUrl}/finance.php?action=driver_balances", 'GET');
+assertStatus(200, $r, 'GET finance?action=driver_balances → 200');
+assertBodyContains('status', 'success', $r, 'Finance driver_balances returns status=success');
+
+// GET categories
+$r = makeRequest("{$baseUrl}/finance.php?action=categories", 'GET');
+assertStatus(200, $r, 'GET finance?action=categories → 200');
+assertBodyContains('status', 'success', $r, 'Finance categories returns status=success');
+
+// POST add_transaction – missing type
+$r = makeRequest("{$baseUrl}/finance.php", 'POST', [
+    'action'   => 'add_transaction',
+    'amount'   => 500,
+    'category' => 'fuel',
+]);
+assertStatus(400, $r, 'POST finance add_transaction missing type → 400');
+
+// POST add_transaction – missing amount
+$r = makeRequest("{$baseUrl}/finance.php", 'POST', [
+    'action'   => 'add_transaction',
+    'type'     => 'expense',
+    'category' => 'fuel',
+]);
+assertStatus(400, $r, 'POST finance add_transaction missing amount → 400');
+
+// POST add_transaction – missing category
+$r = makeRequest("{$baseUrl}/finance.php", 'POST', [
+    'action' => 'add_transaction',
+    'type'   => 'expense',
+    'amount' => 500,
+]);
+assertStatus(400, $r, 'POST finance add_transaction missing category → 400');
+
+// POST update_driver_balance – missing v_id
+$r = makeRequest("{$baseUrl}/finance.php", 'POST', [
+    'action'  => 'update_driver_balance',
+    'balance' => 1000,
+]);
+assertStatus(400, $r, 'POST finance update_driver_balance missing v_id → 400');
+
+// ═════════════════════════════════════════════
+// 59. HTTP Method Enforcement
+// ═════════════════════════════════════════════
+setGroup('HTTP Method Enforcement');
+
+// Endpoints that only support GET – send POST and verify no 500
+$getOnlyEndpoints = [
+    'dashboard.php', 'available_vehicles.php', 'ontrip.php',
+    'running_km_report.php', 'staff_report.php', 'cancel_report.php',
+];
+foreach ($getOnlyEndpoints as $ep) {
+    $r = makeRequest("{$baseUrl}/{$ep}", 'POST', []);
+    assertNotEqual(500, $r['status'], "POST to GET-only {$ep} → not 500");
+}
+
+// Endpoints that only support POST – send GET and verify controlled response (not 500)
+$r = makeRequest("{$baseUrl}/logout.php", 'GET');
+assertNotEqual(500, $r['status'], 'GET logout.php (POST-only) → not 500');
+
+// ═════════════════════════════════════════════
+// 60. Reports – Date Range Coverage
+// ═════════════════════════════════════════════
+setGroup('Reports – Date Range Coverage');
+
+$from = '2026-01-01';
+$to   = date('Y-m-d');
+
+// booking report with from/to
+$r = makeRequest("{$baseUrl}/reports.php?type=booking&from_date={$from}&to_date={$to}", 'GET');
+assertStatus(200, $r, 'GET reports.php?type=booking with date range → 200');
+assertBodyIsArray($r, 'Booking report with date range returns array');
+
+// customer report with from/to
+$r = makeRequest("{$baseUrl}/reports.php?type=customer&from_date={$from}&to_date={$to}", 'GET');
+assertStatus(200, $r, 'GET reports.php?type=customer with date range → 200');
+assertBodyIsArray($r, 'Customer report with date range returns array');
+
+// vehicle report with v_id and date range
+$r = makeRequest("{$baseUrl}/reports.php?type=vehicle&from_date={$from}&to_date={$to}", 'GET');
+assertStatus(200, $r, 'GET reports.php?type=vehicle with date range → 200');
+assertBodyIsArray($r, 'Vehicle report with date range returns array');
+
+// day_wise_report with date range
+$r = makeRequest("{$baseUrl}/day_wise_report.php?from_date={$from}&to_date={$to}", 'GET');
+assertStatus(200, $r, 'GET day_wise_report.php with date range → 200');
+assertBodyIsArray($r, 'Day-wise report with date range returns array');
+
+// running_km_report with date range
+$r = makeRequest("{$baseUrl}/running_km_report.php?from_date={$from}&to_date={$to}", 'GET');
+assertStatus(200, $r, 'GET running_km_report.php with date range → 200');
+assertBodyIsArray($r, 'Running KM report with date range returns array');
+
+// shortage_km_report with date range
+$r = makeRequest("{$baseUrl}/shortage_km_report.php?from_date={$from}&to_date={$to}", 'GET');
+assertStatus(200, $r, 'GET shortage_km_report.php with date range → 200');
+assertBodyIsArray($r, 'Shortage KM report with date range returns array');
+
+// cancel_report with date range
+$r = makeRequest("{$baseUrl}/cancel_report.php?from_date={$from}&to_date={$to}", 'GET');
+assertStatus(200, $r, 'GET cancel_report.php with date range → 200');
+assertBodyIsArray($r, 'Cancel report with date range returns array');
+
+// user_activity_report with ALL users (no user_id)
+$r = makeRequest("{$baseUrl}/user_activity_report.php?from_date={$from}&to_date={$to}", 'GET');
+assertNotEqual(500, $r['status'], 'GET user_activity_report with date range but no user_id → not 500');
+
+// ═════════════════════════════════════════════
+// 61. Booking Counts – Field Validation
+// ═════════════════════════════════════════════
+setGroup('Booking Counts – Field Validation');
+
+$today = date('Y-m-d');
+$r = makeRequest("{$baseUrl}/booking_counts.php?from_date={$today}&to_date={$today}", 'GET');
+assertStatus(200, $r, 'GET booking_counts.php with today range → 200');
+// Check all expected fields exist
+$expectedCountFields = ['total', 'cancelled', 'closed', 'pending', 'on_trip'];
+foreach ($expectedCountFields as $field) {
+    global $passed, $failed;
+    if (isset($r['body'][$field]) || array_key_exists($field, $r['body'] ?? [])) {
+        echo "  ✅ PASS: Booking counts has '{$field}' field\n";
+        $passed++;
+    } else {
+        echo "  ❌ FAIL: Booking counts missing '{$field}' field\n";
+        echo "     Body: " . json_encode($r['body']) . "\n";
+        $failed++;
+    }
+}
+
+// ═════════════════════════════════════════════
+// 62. Dashboard – Stats Field Completeness
+// ═════════════════════════════════════════════
+setGroup('Dashboard – Stats Completeness');
+
+$r = makeRequest("{$baseUrl}/dashboard.php", 'GET');
+assertStatus(200, $r, 'GET dashboard.php → 200');
+
+$requiredStats = [
+    'total_bookings', 'total_customers', 'total_drivers',
+    'on_trip', 'pending_assignments',
+];
+if (is_array($r['body']['stats'] ?? null)) {
+    foreach ($requiredStats as $key) {
+        global $passed, $failed;
+        if (array_key_exists($key, $r['body']['stats'])) {
+            echo "  ✅ PASS: Dashboard stats['{$key}'] present\n";
+            $passed++;
+        } else {
+            echo "  ❌ FAIL: Dashboard stats['{$key}'] missing\n";
+            $failed++;
+        }
+    }
+} else {
+    global $failed;
+    echo "  ❌ FAIL: Dashboard 'stats' key is not an array\n";
+    $failed++;
+}
+
+// ═════════════════════════════════════════════
+// 63. Response Content-Type Validation
+// ═════════════════════════════════════════════
+setGroup('Response Content-Type');
+
+function checkContentType(string $url, string $label): void {
+    global $passed, $failed;
+    $options = [
+        'http' => [
+            'header'        => "Accept: application/json\r\n",
+            'method'        => 'GET',
+            'ignore_errors' => true,
+            'timeout'       => 10,
+        ]
+    ];
+    $context = stream_context_create($options);
+    @file_get_contents($url, false, $context);
+    $headers = $http_response_header ?? [];
+    $contentType = '';
+    foreach ($headers as $h) {
+        if (stripos($h, 'Content-Type:') === 0) {
+            $contentType = strtolower($h);
+            break;
+        }
+    }
+    if (strpos($contentType, 'application/json') !== false || strpos($contentType, 'text/html') !== false) {
+        // Accept either JSON or HTML (some PHP hosts default to text/html)
+        echo "  ✅ PASS: {$label} has a Content-Type header\n";
+        $passed++;
+    } else {
+        echo "  ❌ FAIL: {$label} missing or unexpected Content-Type: {$contentType}\n";
+        $failed++;
+    }
+}
+
+checkContentType("{$baseUrl}/dashboard.php",       'dashboard.php');
+checkContentType("{$baseUrl}/vehicles.php",         'vehicles.php');
+checkContentType("{$baseUrl}/customers.php",        'customers.php');
+checkContentType("{$baseUrl}/staff.php",            'staff.php');
+checkContentType("{$baseUrl}/reports.php?type=booking", 'reports.php?type=booking');
+checkContentType("{$baseUrl}/finance.php?action=summary", 'finance.php?action=summary');
+
+// ═════════════════════════════════════════════
 // Final Summary
 // ═════════════════════════════════════════════
 
