@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
 
     // Stable axios instance — created once, not on every render
     const api = useMemo(() => axios.create({
-        baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/backend/api',
+        baseURL: import.meta.env.VITE_API_URL || '/backend/api',
         withCredentials: true,
         headers: { 'Content-Type': 'application/json' },
     }), []);

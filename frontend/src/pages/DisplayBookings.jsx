@@ -1,38 +1,25 @@
 import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
 
 const DisplayBookings = () => {
-    const toast = useToast();
     const { api } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchBookings();
+        api.get('/bookings.php?all=1')
+            .then(res => setBookings(Array.isArray(res.data) ? res.data : []))
+            .catch(() => setBookings([]))
+            .finally(() => setLoading(false));
     }, []);
-
-    const fetchBookings = async () => {
-        try {
-            const response = await api.get('/bookings.php');
-            if (Array.isArray(response.data)) {
-                setBookings(Array.isArray(response.data) ? response.data : []);
-            } else {
-                setBookings([]);
-            }
-            setLoading(false);
-        } catch (error) {
-            console.error("Error fetching bookings", error);
-            setBookings([]);
-            setLoading(false);
-        }
-    };
 
     if (loading) return (
         <div className="page-wrap">
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
                 <span className="material-icons" style={{ fontSize: 48, color: '#023149', animation: 'spin 2s linear infinite' }}>sync</span>
-                <div style={{ color: '#023149', fontSize: 16, fontWeight: 700 }}>Synchronizing Global Ledger...</div>
+                <div style={{ color: '#023149', fontSize: 16, fontWeight: 700 }}>Loading bookings...</div>
             </div>
             <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
         </div>
@@ -42,81 +29,95 @@ const DisplayBookings = () => {
         <div className="page-wrap">
             <div className="page-header">
                 <div>
-                    <div>
-                        <h1>Global Itinerary Ledger</h1>
-                        <p>View unmitigated historical map of all recorded topologies</p>
-                    </div>
+                    <h1>All Bookings</h1>
+                    <p>Complete history of all registered bookings</p>
+                </div>
+                <div style={{ marginLeft: 'auto', color: '#6b7280', fontSize: 13, alignSelf: 'center' }}>
+                    {bookings.length} {bookings.length === 1 ? 'record' : 'records'}
                 </div>
             </div>
 
             <div className="page-body">
-                <div className="table-wrap" style={{ background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)', overflow: 'hidden' }}>
-                    <table style={{ margin: 0 }}>
-                        <thead style={{ background: '#f8fafc' }}>
-                            <tr>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Ref Hash</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>State Node</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Origin Epoch</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Client Sector</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Origin Coord</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Terminal Coord</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Topology</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Payload Req.</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Env. Control</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Asset Class</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Asset Identity</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Op. Comm Hash</th>
-                                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '.05em' }}>Host Identity</th>
+                <div style={{ overflowX: 'auto', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff' }}>
+                    <table style={{ width: '100%', minWidth: 1000, borderCollapse: 'collapse', fontSize: 13 }}>
+                        <thead>
+                            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                                <th style={thStyle}>Ref #</th>
+                                <th style={thStyle}>Status</th>
+                                <th style={thStyle}>Schedule</th>
+                                <th style={thStyle}>Client</th>
+                                <th style={thStyle}>Mobile</th>
+                                <th style={thStyle}>Pickup</th>
+                                <th style={thStyle}>Destination</th>
+                                <th style={thStyle}>Vehicle</th>
+                                <th style={thStyle}>A/C</th>
+                                <th style={{ ...thStyle, textAlign: 'right', minWidth: 180 }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {bookings.length > 0 ? (
-                                bookings.map((booking) => (
-                                    <tr key={booking.b_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                        <td style={{ padding: '12px 24px', fontWeight: 800, color: '#023149', fontFamily: 'monospace', fontSize: 13 }}>#{booking.b_id}</td>
-                                        <td style={{ padding: '12px 24px' }}>
-                                            <div style={{
-                                                background: booking.assign === '1' ? '#f0fdf4' : '#fffbeb',
-                                                border: `1px solid ${booking.assign === '1' ? '#bbf7d0' : '#fde68a'}`,
-                                                color: booking.assign === '1' ? '#166534' : '#92400e',
-                                                padding: '4px 8px', borderRadius: 4, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em', display: 'inline-flex', alignItems: 'center', gap: 4
-                                            }}>
-                                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: booking.assign === '1' ? '#22c55e' : '#f59e0b' }} />
-                                                {booking.assign === '1' ? 'MAPPED' : 'ORPHANED'}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '12px 24px', color: '#475569', fontSize: 13, maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.pickup}>{booking.pickup}</td>
-                                        <td style={{ padding: '12px 24px', fontWeight: 700, color: '#334155', fontSize: 13, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.to_whom}>{booking.to_whom}</td>
-                                        <td style={{ padding: '12px 24px', color: '#475569', fontSize: 13, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.p_city}>{booking.p_city}</td>
-                                        <td style={{ padding: '12px 24px', color: '#475569', fontSize: 13, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.d_place}>{booking.d_place}</td>
-                                        <td style={{ padding: '12px 24px', color: '#475569', fontSize: 13, fontWeight: 600 }}>{booking.t_type}</td>
-                                        <td style={{ padding: '12px 24px', color: '#64748b', fontSize: 13, fontStyle: booking.remarks ? 'normal' : 'italic', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.remarks}>{booking.remarks || 'NULL'}</td>
-                                        <td style={{ padding: '12px 24px' }}>
-                                            <span style={{
-                                                fontWeight: booking.ac_type === '1' ? 800 : 600,
-                                                color: booking.ac_type === '1' ? '#0369a1' : '#94a3b8',
-                                                fontSize: 12,
-                                                background: booking.ac_type === '1' ? '#f0f9ff' : 'transparent',
-                                                padding: booking.ac_type === '1' ? '4px 8px' : 0,
-                                                borderRadius: 4
-                                            }}>
-                                                {booking.ac_type === '1' ? 'ACTIVE' : 'IDLE'}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '12px 24px', color: '#475569', fontSize: 13, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.v_type}>{booking.v_type}</td>
-                                        <td style={{ padding: '12px 24px', color: '#0f172a', fontWeight: 800, fontSize: 13, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.v_no}>
-                                            {booking.v_no || <span style={{ color: '#cbd5e1', fontWeight: 400 }}>UNASSIGNED</span>}
-                                        </td>
-                                        <td style={{ padding: '12px 24px', color: '#64748b', fontSize: 13, fontFamily: 'monospace', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.d_mobile}>{booking.d_mobile || '-'}</td>
-                                        <td style={{ padding: '12px 24px', fontWeight: 700, color: '#334155', fontSize: 13, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={booking.b_name}>{booking.b_name}</td>
-                                    </tr>
-                                ))
-                            ) : (
+                            {bookings.length > 0 ? bookings.map((b, i) => (
+                                <tr key={b.b_id} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                                    <td style={{ ...tdStyle, fontWeight: 800, color: '#023149', fontFamily: 'monospace' }}>#{b.b_id}</td>
+                                    <td style={tdStyle}>
+                                        <span style={{
+                                            display: 'inline-block',
+                                            padding: '3px 10px',
+                                            borderRadius: 20,
+                                            fontSize: 11,
+                                            fontWeight: 700,
+                                            whiteSpace: 'nowrap',
+                                            background: b.assign === '1' ? '#dbeafe' : '#fef9c3',
+                                            color: b.assign === '1' ? '#1d4ed8' : '#92400e',
+                                        }}>
+                                            {b.assign === '1' ? 'Driver Assigned' : 'Awaiting'}
+                                        </span>
+                                    </td>
+                                    <td style={{ ...tdStyle, color: '#374151', whiteSpace: 'nowrap' }}>{b.b_date} {b.b_time}</td>
+                                    <td style={{ ...tdStyle, fontWeight: 600, color: '#023149' }}>{b.b_name}</td>
+                                    <td style={{ ...tdStyle, color: '#6b7280', whiteSpace: 'nowrap' }}>{b.m_no}</td>
+                                    <td style={{ ...tdStyle, color: '#475569' }}>{b.p_city}</td>
+                                    <td style={{ ...tdStyle, color: '#475569' }}>{b.d_place}</td>
+                                    <td style={{ ...tdStyle, fontWeight: 600, color: '#023149' }}>{b.v_type}</td>
+                                    <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
+                                        <span style={{
+                                            display: 'inline-block',
+                                            padding: '2px 8px',
+                                            borderRadius: 4,
+                                            fontSize: 11,
+                                            fontWeight: 600,
+                                            background: b.ac_type === '1' ? '#d1fae5' : '#f1f5f9',
+                                            color: b.ac_type === '1' ? '#065f46' : '#64748b',
+                                        }}>
+                                            {b.ac_type === '1' ? 'AC' : 'Non-AC'}
+                                        </span>
+                                    </td>
+                                    <td style={{ ...tdStyle, textAlign: 'right' }}>
+                                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
+                                            {b.assign === '1' && (
+                                                <button
+                                                    onClick={() => navigate('/trip-closing', { state: { booking: b } })}
+                                                    style={closeBtnStyle}
+                                                >
+                                                    <span className="material-icons" style={{ fontSize: 14 }}>task_alt</span>
+                                                    Close
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => navigate('/cancel-booking', { state: { booking: b } })}
+                                                style={abortBtnStyle}
+                                            >
+                                                <span className="material-icons" style={{ fontSize: 14 }}>cancel</span>
+                                                Abort
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )) : (
                                 <tr>
-                                    <td colSpan="13" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                                            <span className="material-icons" style={{ fontSize: 32, color: '#cbd5e1' }}>history_edu</span>
-                                            <div>Global ledger is entirely empty.</div>
+                                    <td colSpan="10" style={{ textAlign: 'center', padding: '60px 40px', color: '#6b7280' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                                            <span className="material-icons" style={{ fontSize: 36, color: '#cbd5e1' }}>inbox</span>
+                                            <div style={{ fontWeight: 600 }}>No bookings found</div>
                                         </div>
                                     </td>
                                 </tr>
@@ -129,5 +130,50 @@ const DisplayBookings = () => {
     );
 };
 
-export default DisplayBookings;
+const thStyle = {
+    padding: '12px 14px',
+    textAlign: 'left',
+    fontWeight: 700,
+    fontSize: 11,
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    whiteSpace: 'nowrap',
+};
 
+const tdStyle = {
+    padding: '13px 14px',
+    verticalAlign: 'middle',
+};
+
+const closeBtnStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '5px 12px',
+    fontSize: 12,
+    fontWeight: 600,
+    borderRadius: 6,
+    border: '1px solid #cbd5e1',
+    background: '#fff',
+    color: '#023149',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+};
+
+const abortBtnStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '5px 12px',
+    fontSize: 12,
+    fontWeight: 600,
+    borderRadius: 6,
+    border: '1px solid #fecaca',
+    background: '#fef2f2',
+    color: '#c5111a',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+};
+
+export default DisplayBookings;

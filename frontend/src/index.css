@@ -107,7 +107,7 @@ body {
 
 .page-header>* {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1600px;
   padding: 0 32px;
   display: flex;
   align-items: center;
@@ -133,7 +133,7 @@ body {
 /* Main content area — centered, max-width */
 .page-body {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 24px 32px 40px;
   flex: 1;

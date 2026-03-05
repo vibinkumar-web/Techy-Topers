@@ -9,8 +9,10 @@ $db = $database->getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-     // Fetch bookings. Can add filters later.
-    $query = "SELECT * FROM f_ft_booking ORDER BY b_id DESC";
+    $all = isset($_GET['all']) && $_GET['all'] === '1';
+    $query = $all
+        ? "SELECT * FROM f_ft_booking ORDER BY b_id DESC"
+        : "SELECT * FROM f_ft_booking WHERE b_date >= CURDATE() ORDER BY b_id DESC";
     $stmt = $db->prepare($query);
     $stmt->execute();
     

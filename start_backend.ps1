@@ -23,4 +23,5 @@ if (-not $php) {
 }
 
 Write-Host "Starting PHP server at http://localhost:8080 using $php" -ForegroundColor Green
+Set-Location "$PSScriptRoot\backend"
 & $php -S localhost:8080 -t .
