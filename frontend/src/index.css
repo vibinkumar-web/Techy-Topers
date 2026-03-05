@@ -676,31 +676,170 @@ a {
 }
 
 /* ══════════════════════════════════════════════
-   RESPONSIVE HELPERS
+   NAVBAR RESPONSIVE CLASSES
 ══════════════════════════════════════════════ */
 
-@media (max-width: 1024px) {
-  .page-body {
-    padding: 24px 24px 40px;
+/* Desktop nav / logout shown by default */
+.nav-desktop {
+  display: flex;
+}
+
+/* Mobile-only avatar hidden by default */
+.nav-mobile-avatar {
+  display: none !important;
+}
+
+/* Hamburger hidden by default */
+.nav-hamburger {
+  display: none !important;
+}
+
+/* ── Tablet & Mobile: hide desktop nav, show hamburger ── */
+@media (max-width: 1023px) {
+  .nav-desktop {
+    display: none !important;
   }
 
-  .page-header>* {
-    padding: 0 24px;
+  .nav-hamburger {
+    display: flex !important;
+  }
+
+  .nav-mobile-avatar {
+    display: flex !important;
+  }
+
+  .nav-icon-btn {
+    display: none;
   }
 }
 
-@media (max-width: 768px) {
-  .page-header>* {
+/* ══════════════════════════════════════════════
+   RESPONSIVE HELPERS
+══════════════════════════════════════════════ */
+
+/* ── Large screens (≥1280px): generous padding ── */
+@media (min-width: 1280px) {
+  .page-body {
+    padding: 28px 40px 48px;
+  }
+}
+
+/* ── Laptop (1024px – 1279px) ── */
+@media (max-width: 1279px) {
+  .page-body {
+    padding: 24px 28px 40px;
+  }
+
+  .page-header > * {
+    padding: 0 28px;
+  }
+}
+
+/* ── Tablet (768px – 1023px) ── */
+@media (max-width: 1023px) {
+  .page-body {
+    padding: 20px 20px 36px;
+  }
+
+  .page-header > * {
+    padding: 0 20px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Tables scroll horizontally on tablet */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ── Large mobile / small tablet (600px – 767px) ── */
+@media (max-width: 767px) {
+  .page-header > * {
     padding: 0 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 
   .page-body {
-    padding: 16px 16px 32px;
+    padding: 16px 14px 32px;
   }
 
   .toolbar {
-    padding: 12px;
+    padding: 12px 14px;
+    gap: 8px 10px;
+  }
+
+  .form-grid-2,
+  .form-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Tables always scroll on mobile */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-wrap table,
+  table.ent {
+    min-width: 600px;
+  }
+
+  .modal {
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 0 4px;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+    flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .modal-footer button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* ── Mobile (≤479px) ── */
+@media (max-width: 479px) {
+  .page-header h1 {
+    font-size: 17px;
+  }
+
+  .page-body {
+    padding: 12px 12px 28px;
+  }
+
+  .toolbar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .toolbar-group {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .toolbar input,
+  .toolbar select {
+    width: 100%;
+    min-width: 0;
   }
 
   .form-grid,
@@ -710,30 +849,41 @@ a {
   }
 
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 
-  .modal {
-    max-width: 100%;
-    border-radius: 8px;
+  .table-wrap table,
+  table.ent {
+    min-width: 520px;
+  }
+
+  .section-title {
+    font-size: 11px;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  /* Full-width buttons in action bars on mobile */
+  .toolbar button.ent,
+  .toolbar .btn-primary {
+    width: 100%;
+    justify-content: center;
   }
 }
 
-@media (max-width: 480px) {
+/* ── Very small phones (≤359px) ── */
+@media (max-width: 359px) {
   .stats-grid {
     grid-template-columns: 1fr;
   }
 
-  .toolbar-group {
-    width: 100%;
-  }
-
-  .toolbar input,
-  .toolbar select {
-    width: 100%;
-  }
-
   .page-header h1 {
-    font-size: 18px;
+    font-size: 15px;
   }
 }

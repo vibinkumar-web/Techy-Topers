@@ -89,6 +89,17 @@ const VehicleTariffSettings = () => {
         }
     };
 
+    const handleDelete = async (v) => {
+        if (!window.confirm(`Delete "${v.v_name}"? This cannot be undone.`)) return;
+        try {
+            await api.post('/vehicle_pricing.php', { action: 'delete', id: v.id });
+            setVehicles(vehicles.filter(item => item.id !== v.id));
+            toast(`"${v.v_name}" deleted.`);
+        } catch (error) {
+            toast('Failed to delete vehicle.', 'error');
+        }
+    };
+
     const handleCreateNew = async () => {
         if (!newVehicle.v_name) return toast("Please enter a vehicle name", 'warning');
         setSaving(true);
@@ -210,15 +221,27 @@ const VehicleTariffSettings = () => {
                                             </button>
                                         </div>
                                     ) : (
-                                        <button
-                                            onClick={() => handleEdit(v)}
-                                            style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#c026d3', background: '#fdf4ff', border: '1px solid #f5d0fe', borderRadius: 6, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, transition: 'all .2s' }}
-                                            onMouseEnter={e => { e.currentTarget.style.background = '#fae8ff'; e.currentTarget.style.borderColor = '#e879f9'; }}
-                                            onMouseLeave={e => { e.currentTarget.style.background = '#fdf4ff'; e.currentTarget.style.borderColor = '#f5d0fe'; }}
-                                        >
-                                            <span className="material-icons" style={{ fontSize: 14 }}>edit</span>
-                                            Edit Rate
-                                        </button>
+                                        <div style={{ display: 'inline-flex', gap: 8, justifyContent: 'flex-end' }}>
+                                            <button
+                                                onClick={() => handleEdit(v)}
+                                                style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#c026d3', background: '#fdf4ff', border: '1px solid #f5d0fe', borderRadius: 6, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, transition: 'all .2s' }}
+                                                onMouseEnter={e => { e.currentTarget.style.background = '#fae8ff'; e.currentTarget.style.borderColor = '#e879f9'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.background = '#fdf4ff'; e.currentTarget.style.borderColor = '#f5d0fe'; }}
+                                            >
+                                                <span className="material-icons" style={{ fontSize: 14 }}>edit</span>
+                                                Edit Rate
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(v)}
+                                                style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#c5111a', background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 6, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, transition: 'all .2s' }}
+                                                onMouseEnter={e => { e.currentTarget.style.background = '#ffe4e6'; e.currentTarget.style.borderColor = '#fca5a5'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.background = '#fff1f2'; e.currentTarget.style.borderColor = '#fecdd3'; }}
+                                                title="Delete vehicle"
+                                            >
+                                                <span className="material-icons" style={{ fontSize: 14 }}>delete</span>
+                                                Delete
+                                            </button>
+                                        </div>
                                     )}
                                 </td>
                             </tr>

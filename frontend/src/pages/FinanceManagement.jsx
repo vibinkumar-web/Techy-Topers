@@ -268,7 +268,7 @@ const FinanceManagement = () => {
             <div className="page-body" style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 60 }}>
 
                 {/* ── Summary Bar ── */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, padding: '0 40px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
                     {[
                         { label: 'Total Income', value: summary.total_income, color: '#10b981', icon: 'trending_up' },
                         { label: 'Total Expense', value: summary.total_expense, color: '#c5111a', icon: 'trending_down' },
@@ -294,7 +294,7 @@ const FinanceManagement = () => {
                 </div>
 
                 {/* ── 3 Entry Form Cards ── */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, padding: '0 40px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
 
                     {/* Card 1: Taxi Commission */}
                     <div style={{ background: '#fff', padding: 28, borderRadius: 12, boxShadow: '0 2px 8px rgba(2,49,73,.06)', borderTop: '4px solid #10b981' }}>
@@ -473,7 +473,7 @@ const FinanceManagement = () => {
                 </div>
 
                 {/* ── Combined Ledger Table ── */}
-                <div className="section" id="print-ledger" style={{ margin: '0 40px' }}>
+                <div className="section" id="print-ledger">
 
                     {/* Type Filter Tabs */}
                     <div style={{ display: 'flex', gap: 8, padding: '16px 20px 0', flexWrap: 'wrap', borderBottom: '1px solid #f1f5f9' }}>

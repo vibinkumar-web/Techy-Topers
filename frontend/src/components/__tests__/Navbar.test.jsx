@@ -35,7 +35,10 @@ test('shows nav links and logout button when user is logged in', () => {
 
 test('displays user initial in avatar chip', () => {
     renderNavbar(mockAdminUser);
-    expect(screen.getByText('A')).toBeInTheDocument();
+    // Avatar initial appears in both desktop chip and mobile avatar elements
+    const avatars = screen.getAllByText('A');
+    expect(avatars.length).toBeGreaterThanOrEqual(1);
+    expect(avatars[0]).toBeInTheDocument();
 });
 
 test('calls logout when logout button clicked', () => {

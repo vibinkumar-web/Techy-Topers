@@ -171,7 +171,9 @@ const handleChange = (e) => {
                                     style={{ fontSize: 13 }}
                                 />
                             </div>
-                            <div style={{ display: 'flex', gap: 12, height: 48 }}>
+                            <div className="form-field" style={{ margin: 0 }}>
+                            <label style={{ visibility: 'hidden' }}>Action</label>
+                            <div style={{ display: 'flex', gap: 12 }}>
                                 <button
                                     type="button"
                                     onClick={handleLogin}
@@ -196,6 +198,7 @@ const handleChange = (e) => {
                                 >
                                     <span className="material-icons" style={{ fontSize: 24, fontWeight: 'bold' }}>logout</span>
                                 </button>
+                            </div>
                             </div>
                         </form>
                     </div>

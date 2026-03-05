@@ -68,6 +68,16 @@ switch ($method) {
                 http_response_code(400);
                 echo json_encode(["status" => "error", "message" => "Missing vehicle name for creation"]);
             }
+        } else if (isset($data['action']) && $data['action'] === 'delete' && isset($data['id'])) {
+            $sqlDelete = "DELETE FROM enquery_tariff WHERE id = ?";
+            $stmtDelete = $pdo->prepare($sqlDelete);
+            $success = $stmtDelete->execute([$data['id']]);
+            if ($success) {
+                echo json_encode(["status" => "success", "message" => "Vehicle deleted successfully"]);
+            } else {
+                http_response_code(500);
+                echo json_encode(["status" => "error", "message" => "Failed to delete vehicle"]);
+            }
         } else {
             http_response_code(400);
             echo json_encode(["status" => "error", "message" => "Invalid input data"]);
